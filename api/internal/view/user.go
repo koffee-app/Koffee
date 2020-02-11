@@ -21,5 +21,5 @@ type UserResponse struct {
 func User(w http.ResponseWriter, user *models.User) {
 	u := UserResponse{Email: user.Email, Token: user.Token, LogedAt: user.LogedAt, ExpiresAt: user.SessionExpiresAt, NewAccount: user.NewAccount, ID: user.UserID}
 	prepareJSON(w, http.StatusOK)
-	ReturnJSON(w, formatJSON(u, "Success", http.StatusOK))
+	ReturnJSON(w, FormatJSON(u, "Success", http.StatusOK))
 }
