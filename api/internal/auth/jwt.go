@@ -23,7 +23,6 @@ type UserJWT struct {
 func NewUserJWT(email string, id uint32) *UserJWT {
 	user := &UserJWT{Email: email, UserID: id, LogedAt: time.Now()}
 	user.ExpiresAt = time.Now().Add(time.Hour * 24).Unix()
-
 	return user
 }
 

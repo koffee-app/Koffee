@@ -95,8 +95,10 @@ func LogUserNotGoogle(db *sqlx.DB, email, password string) (*User, *UserError) {
 	if err := bcrypt.CompareHashAndPassword([]byte(pass), []byte(password)); err != nil {
 		return nil, &UserError{Password: "Incorrect credentials."}
 	}
+
 	u = *UserJWTToUser(auth.NewUserJWT(email, u.UserID))
 	u.Token, e = auth.GenerateTokenJWT(email, u.UserID)
+	u.Token = fmt.Sprintf("Bearer %s", u.Token)
 	if e != nil {
 		return nil, &UserError{Email: "Incorrect user credentials?", Internal: e.Error(), Password: "Error generating token"}
 	}
