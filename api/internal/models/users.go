@@ -51,8 +51,8 @@ type UserError struct {
 // Initialize initializes table
 func Initialize(db *sqlx.DB) {
 	t := db.MustBegin()
-	t.Exec(userSchema)
-	t.Commit()
+	_, _ = t.Exec(userSchema)
+	_ = t.Commit()
 }
 
 // Message informing what happened.
@@ -95,6 +95,7 @@ func LogUserNotGoogle(db *sqlx.DB, email, password string) (*User, *UserError) {
 	if err := bcrypt.CompareHashAndPassword([]byte(pass), []byte(password)); err != nil {
 		return nil, &UserError{Password: "Incorrect credentials."}
 	}
+	u = *UserJWTToUser(auth.NewUserJWT(email, u.UserID))
 	u.Token, e = auth.GenerateTokenJWT(email, u.UserID)
 	if e != nil {
 		return nil, &UserError{Email: "Incorrect user credentials?", Internal: e.Error(), Password: "Error generating token"}
