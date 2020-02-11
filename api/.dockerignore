@@ -1,0 +1,14 @@
+.git
+tmp
+log
+doc
+spec
+media
+.openshift
+.bundle
+vendor/bundle
+db/*.sqlite3
+public/system/*
+coverage
+.travis.yml
+build_docker_image.sh
