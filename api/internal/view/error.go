@@ -11,7 +11,7 @@ type ErrorResp interface {
 }
 
 func end(w http.ResponseWriter, err ErrorResp, code uint16) {
-	ReturnJSON(w, formatJSON(err, err.Message(), code))
+	ReturnJSON(w, FormatJSON(err, err.Message(), code))
 }
 
 // RenderAuthError Sends to the client the error
