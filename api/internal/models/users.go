@@ -65,7 +65,7 @@ func AddUser(db *sqlx.DB, email, password string, isGoogleAccount bool) (*User, 
 	if !isGoogleAccount {
 		return addUserNoGoogle(db, email, password)
 	}
-	return nil, nil
+	return addUserGoogle(db, email)
 }
 
 // LogUserNotGoogle Tries to log in via email password way, if the stored user is a google acc this will
@@ -96,9 +96,10 @@ func LogUserNotGoogle(db *sqlx.DB, email, password string) (*User, *UserError) {
 		return nil, &UserError{Password: "Incorrect credentials."}
 	}
 
-	u = *UserJWTToUser(auth.NewUserJWT(email, u.UserID))
-	u.Token, e = auth.GenerateTokenJWT(email, u.UserID)
-	u.Token = fmt.Sprintf("Bearer %s", u.Token)
+	token, e := auth.GenerateTokenJWT(email, u.UserID)
+	u.Token = fmt.Sprintf("Bearer %s", token)
+	u.SessionExpiresAt = auth.ExpiresAt()
+
 	if e != nil {
 		return nil, &UserError{Email: "Incorrect user credentials?", Internal: e.Error(), Password: "Error generating token"}
 	}
@@ -127,7 +128,7 @@ func addUserNoGoogle(db *sqlx.DB, email, password string) (*User, *UserError) {
 	// generate token
 	token, _ := auth.GenerateTokenJWT(email, uint32(lastID))
 	// return newly generated user
-	return &User{Password: sql.NullString{String: p}, IsGoogleAccount: false, Email: email, NewAccount: true, Token: fmt.Sprintf("Bearer %s", token), UserID: uint32(lastID)}, nil
+	return &User{Password: sql.NullString{String: p}, IsGoogleAccount: false, Email: email, NewAccount: true, Token: fmt.Sprintf("Bearer %s", token), UserID: uint32(lastID), SessionExpiresAt: auth.ExpiresAt()}, nil
 }
 
 // compares hashed and nonhashed passwords and if they are equal returns true
@@ -163,24 +164,42 @@ func checkValuesForAdding(tx *sqlx.Tx, email, password string) *UserError {
 	if bad {
 		return e
 	}
-	// Start checking if the email exists.
-	u := &[]User{}
-	// Check if email already exists.
-	err := tx.Select(u, "SELECT email, password FROM users WHERE email=$1 LIMIT 1", email)
+
+	exists, err := UserExists(email, tx, nil)
+
 	if err != nil {
 		fmt.Println(err.Error())
 		e.Internal = err.Error()
 		return e
 	}
-	tx.Commit()
 
-	// If it does not exist all is fine.
-	if len(*u) == 0 {
+	if !exists {
 		return nil
 	}
 
 	e.Email = `User already exists!`
 	return e
+}
+
+// UserExists checks if user exists in passed database. Pass tx if you want to use a Tx, pass a database if you want a Tx created in the function
+func UserExists(email string, tx *sqlx.Tx, db *sqlx.DB) (bool, error) {
+	if tx == nil {
+		tx = db.MustBegin()
+	}
+	u := &[]User{}
+	// Check if email already exists.
+	err := tx.Select(u, "SELECT email, password FROM users WHERE email=$1 LIMIT 1", email)
+	if err != nil {
+		fmt.Println(err.Error())
+		return false, err
+	}
+	tx.Commit()
+
+	// If it does not exist all is fine.
+	if len(*u) == 0 {
+		return false, nil
+	}
+	return true, nil
 }
 
 // Encrypts password

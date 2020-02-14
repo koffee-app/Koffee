@@ -19,10 +19,17 @@ type UserJWT struct {
 	jwt.StandardClaims
 }
 
+const expiresHours = 24
+
+// ExpiresAt Returns expires at number
+func ExpiresAt() int64 {
+	return time.Now().Add(time.Hour * expiresHours).Unix()
+}
+
 // NewUserJWT Returns a new UserJWT
 func NewUserJWT(email string, id uint32) *UserJWT {
 	user := &UserJWT{Email: email, UserID: id, LogedAt: time.Now()}
-	user.ExpiresAt = time.Now().Add(time.Hour * 24).Unix()
+	user.ExpiresAt = time.Now().Add(time.Hour * expiresHours).Unix()
 	return user
 }
 

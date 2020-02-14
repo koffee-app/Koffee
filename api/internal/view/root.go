@@ -13,7 +13,8 @@ type ResponseJSON struct {
 	Data       interface{} `json:"data,omitempty"`
 }
 
-func prepareJSON(w http.ResponseWriter, statusCode uint16) {
+// PrepareJSON Adds the headers.
+func PrepareJSON(w http.ResponseWriter, statusCode uint16) {
 	w.Header().Add("content-type", "application/json")
 	w.WriteHeader(int(statusCode))
 }

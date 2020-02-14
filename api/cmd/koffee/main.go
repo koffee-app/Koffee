@@ -15,6 +15,7 @@ import (
 func startServer(db *sqlx.DB) {
 	router := httprouter.New()
 	router.GET("/", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		view.PrepareJSON(w, 200)
 		view.ReturnJSON(w, view.FormatJSON(nil, "Test succeeded! You can use Koffee!", 200))
 	})
 	group := controllers.Group{Prefix: "/api"}

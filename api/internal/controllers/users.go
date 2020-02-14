@@ -14,8 +14,9 @@ import (
 
 // user request body
 type userBody struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email       string `json:"email,omitempty"`
+	Password    string `json:"password,omitempty"`
+	GoogleToken string `json:"google_access_token,omitempty"`
 }
 
 func (u *userBody) BodyUser(r io.ReadCloser) error {
@@ -55,6 +56,40 @@ func (u *userImpl) loginHandle(w http.ResponseWriter, r *http.Request, _ httprou
 	}
 }
 
+// todo test this
+func (u *userImpl) googleLoginHandle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	body, err := parseBody(r.Body)
+
+	if err != nil {
+		view.Error(w, "Error parsing the request body.", http.StatusBadRequest, err)
+	}
+
+	success, notsuccessful, err := models.GoogleAuthentication(body.GoogleToken)
+
+	if err != nil {
+		view.Error(w, "Error requesting to Google.", http.StatusNotFound, err)
+		return
+	}
+
+	if notsuccessful != nil {
+		view.Error(w, "Error authenticating with Google access_token", http.StatusBadRequest, notsuccessful)
+		return
+	}
+
+	if err != nil {
+		view.Error(w, "Internal error", http.StatusBadRequest, err)
+		return
+	}
+
+	usucc, uerr := models.AddUser(u.db, success.Email, "", true)
+
+	if uerr != nil {
+		view.RenderAuthError(w, uerr)
+	}
+
+	view.User(w, usucc)
+}
+
 // handles the registration route
 func (u *userImpl) registerHandle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	body := &userBody{}
@@ -71,3 +106,11 @@ func (u *userImpl) registerHandle(w http.ResponseWriter, r *http.Request, _ http
 
 // Verify or create account after signin with google
 func (u *userImpl) googleAccount(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {}
+
+func parseBody(body io.ReadCloser) (*userBody, error) {
+	ub := &userBody{}
+	if err := ub.BodyUser(body); err != nil {
+		return nil, err
+	}
+	return ub, nil
+}

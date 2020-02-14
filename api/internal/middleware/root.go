@@ -1,8 +1,11 @@
 package middleware
 
-import "net/http"
+import (
+	"koffee/internal/models"
+	"net/http"
 
-import "koffee/internal/models"
+	"github.com/julienschmidt/httprouter"
+)
 
 type userKey uint8
 
@@ -13,4 +16,11 @@ var UserContextKey userKey = 1
 func GetUser(r *http.Request) *models.User {
 	u, _ := r.Context().Value(UserContextKey).(*models.User)
 	return u
+}
+
+// Authorization middleware
+func Authorization(h httprouter.Handle) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		JwtAuthentication(h)
+	}
 }
