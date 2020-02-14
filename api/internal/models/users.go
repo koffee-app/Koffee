@@ -46,6 +46,7 @@ type UserError struct {
 	Password string `json:"password"`
 	Email    string `json:"email"`
 	Internal string `json:"internal"`
+	Token    string `json:"token,omitempty"`
 }
 
 // Initialize initializes table
@@ -165,7 +166,7 @@ func checkValuesForAdding(tx *sqlx.Tx, email, password string) *UserError {
 		return e
 	}
 
-	exists, err := UserExists(email, tx, nil)
+	exists, _, err := UserExists(email, tx, nil)
 
 	if err != nil {
 		fmt.Println(err.Error())
@@ -182,24 +183,24 @@ func checkValuesForAdding(tx *sqlx.Tx, email, password string) *UserError {
 }
 
 // UserExists checks if user exists in passed database. Pass tx if you want to use a Tx, pass a database if you want a Tx created in the function
-func UserExists(email string, tx *sqlx.Tx, db *sqlx.DB) (bool, error) {
+func UserExists(email string, tx *sqlx.Tx, db *sqlx.DB) (bool, *User, error) {
+	fmt.Print(email)
 	if tx == nil {
 		tx = db.MustBegin()
 	}
 	u := &[]User{}
 	// Check if email already exists.
-	err := tx.Select(u, "SELECT email, password FROM users WHERE email=$1 LIMIT 1", email)
+	err := tx.Select(u, "SELECT email, id, isgoogleaccount FROM users WHERE email=$1 LIMIT 1", email)
 	if err != nil {
 		fmt.Println(err.Error())
-		return false, err
+		return false, nil, err
 	}
 	tx.Commit()
-
 	// If it does not exist all is fine.
 	if len(*u) == 0 {
-		return false, nil
+		return false, nil, nil
 	}
-	return true, nil
+	return true, &(*u)[0], nil
 }
 
 // Encrypts password

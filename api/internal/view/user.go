@@ -19,6 +19,9 @@ type UserResponse struct {
 
 // User User response
 func User(w http.ResponseWriter, user *models.User) {
+	if user.LogedAt.Year() == 1 {
+		user.LogedAt = time.Now()
+	}
 	u := UserResponse{Email: user.Email, Token: user.Token, LogedAt: user.LogedAt, ExpiresAt: user.SessionExpiresAt, NewAccount: user.NewAccount, ID: user.UserID}
 	PrepareJSON(w, http.StatusOK)
 	ReturnJSON(w, FormatJSON(u, "Success", http.StatusOK))

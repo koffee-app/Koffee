@@ -72,15 +72,52 @@ func GoogleAuthentication(token string) (*GoogleAuthResponse, *GoogleErrorRespon
 // Adds a Google User, check if it exists
 // todo Check more errors.
 func addUserGoogle(db *sqlx.DB, email string) (*User, *UserError) {
-	doesExist, _ := UserExists(email, nil, db)
+	doesExist, _, _ := UserExists(email, nil, db)
 	if doesExist {
 		return nil, &UserError{Email: "User already exists"}
 	}
 	tx := db.MustBegin()
 	var lastID int
-	_ = tx.QueryRowx("INSERT INTO users (email, password, isgoogleaccount) VALUES ($1, none, $2) RETURNING id", email, true).Scan(lastID)
+	_ = tx.QueryRowx("INSERT INTO users (email, password, isgoogleaccount) VALUES ($1, $2, $3) RETURNING id", email, "", true).Scan(lastID)
 	tx.Commit()
 	t, _ := auth.GenerateTokenJWT(email, uint32(lastID))
 	expires := auth.ExpiresAt()
 	return &User{Email: email, Token: fmt.Sprintf("Bearer %s", t), IsGoogleAccount: true, NewAccount: true, Password: sql.NullString{String: ""}, SessionExpiresAt: expires}, nil
+}
+
+// LogUserGoogle Logs user via google access_token
+func LogUserGoogle(db *sqlx.DB, token string) (*User, *UserError) {
+	succres, errres, err := GoogleAuthentication(token)
+	if err != nil {
+		return nil, &UserError{Internal: err.Error()}
+	}
+	if errres != nil {
+		return nil, &UserError{Token: errres.ErrorToken}
+	}
+
+	exists, u, err := UserExists(succres.Email, nil, db)
+
+	if err != nil {
+		return nil, &UserError{Internal: err.Error()}
+	}
+
+	if !exists {
+		return nil, &UserError{Email: "User does not exist!"}
+	}
+
+	if u == nil {
+		panic("Something bad happened inside UserExists()")
+	}
+
+	if !u.IsGoogleAccount {
+		return nil, &UserError{Email: "User is not a Google account!"}
+	}
+
+	u.Token, _ = auth.GenerateTokenJWT(succres.Email, uint32(u.UserID))
+	u.Token = auth.Bearify(u.Token)
+	u.SessionExpiresAt = auth.ExpiresAt()
+	u.NewAccount = false
+	u.Password = sql.NullString{String: ""}
+
+	return u, nil
 }

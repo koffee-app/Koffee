@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 
 	"os"
 
@@ -52,24 +51,24 @@ func OAUTHGoogle(router *httprouter.Router) {
 		// fmt.Print("m: ")
 	})
 
-	router.POST("/api/google/token", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		fmt.Println("HIT API/GOOGLE/TOKEN")
-		fmt.Println(r.Header.Get("Authorization"))
-		if r.Header.Get("Authorization") == "" {
-			w.Write([]byte("x"))
-			return
-		}
-		// decoder := json.NewDecoder(r.Body)
-		// b := map[string]interface{}{}
-		// err := decoder.Decode(&b)
-		// fmt.Println(b)
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
-		// e, _ := json.Marshal(b)
+	// router.POST("/api/google/token", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	// 	fmt.Println("HIT API/GOOGLE/TOKEN")
+	// 	fmt.Println(r.Header.Get("Authorization"))
+	// 	if r.Header.Get("Authorization") == "" {
+	// 		w.Write([]byte("x"))
+	// 		return
+	// 	}
+	// 	// decoder := json.NewDecoder(r.Body)
+	// 	// b := map[string]interface{}{}
+	// 	// err := decoder.Decode(&b)
+	// 	// fmt.Println(b)
+	// 	// if err != nil {
+	// 	// 	log.Fatal(err)
+	// 	// }
+	// 	// e, _ := json.Marshal(b)
 
-		w.Write([]byte(`{ "access_token": "` + strings.Split(r.Header.Get("Authorization"), " ")[1] + `"}`))
-	})
+	// 	w.Write([]byte(`{ "access_token": "` + strings.Split(r.Header.Get("Authorization"), " ")[1] + `"}`))
+	// })
 
 	router.GET("/google", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		fmt.Println("HIT /GOOGLE")

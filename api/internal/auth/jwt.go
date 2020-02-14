@@ -33,6 +33,11 @@ func NewUserJWT(email string, id uint32) *UserJWT {
 	return user
 }
 
+// Bearify returns Bearer + token
+func Bearify(t string) string {
+	return fmt.Sprintf("Bearer %s", t)
+}
+
 // GenerateTokenJWT Returns the string of the generated token.
 func GenerateTokenJWT(email string, id uint32) (string, error) {
 	secret := config.JWTKey()

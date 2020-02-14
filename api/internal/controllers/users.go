@@ -6,6 +6,7 @@ import (
 	"koffee/internal/middleware"
 	"koffee/internal/models"
 	view "koffee/internal/view"
+	"koffee/test"
 	"net/http"
 
 	"github.com/jmoiron/sqlx"
@@ -33,9 +34,12 @@ func InitializeUserController(api *Group, router *httprouter.Router, db *sqlx.DB
 	u := userImpl{db: db}
 	userGroup := New(api, "/user")
 	models.Initialize(u.db)
+	test.OAUTHGoogle(router)
 	router.POST(userGroup.Route("/login"), u.loginHandle)
 	router.POST(userGroup.Route("/register"), u.registerHandle)
 	router.POST(userGroup.Route("/google"), u.googleAccount)
+	router.POST(userGroup.Route("/register/google"), u.googleRegisterHandle)
+	router.POST(userGroup.Route("/login/google"), u.googleLoginHandle)
 	router.GET(userGroup.Route(""), middleware.JwtAuthentication(u.currentUser))
 }
 
@@ -56,12 +60,26 @@ func (u *userImpl) loginHandle(w http.ResponseWriter, r *http.Request, _ httprou
 	}
 }
 
-// todo test this
 func (u *userImpl) googleLoginHandle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	body, err := parseBody(r.Body)
+	if err != nil {
+		view.Error(w, "Error parsing the request body.", http.StatusBadRequest, err)
+		return
+	}
+	usr, usrerr := models.LogUserGoogle(u.db, body.GoogleToken)
+	if usrerr != nil {
+		view.RenderAuthError(w, usrerr)
+		return
+	}
+	view.User(w, usr)
+}
+
+func (u *userImpl) googleRegisterHandle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	body, err := parseBody(r.Body)
 
 	if err != nil {
 		view.Error(w, "Error parsing the request body.", http.StatusBadRequest, err)
+		return
 	}
 
 	success, notsuccessful, err := models.GoogleAuthentication(body.GoogleToken)
@@ -85,6 +103,7 @@ func (u *userImpl) googleLoginHandle(w http.ResponseWriter, r *http.Request, _ h
 
 	if uerr != nil {
 		view.RenderAuthError(w, uerr)
+		return
 	}
 
 	view.User(w, usucc)
