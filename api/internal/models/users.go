@@ -122,7 +122,7 @@ func addUserNoGoogle(db *sqlx.DB, email, password string) (*User, *UserError) {
 	// insert the user and tget the lastID
 	err := t.QueryRowx("INSERT INTO users (email, password, isgoogleaccount) VALUES ($1, $2, $3) RETURNING id", email, p, false).Scan(&lastID)
 	if err != nil {
-		return nil, &UserError{Internal: err.Error() + " line 72"}
+		return nil, &UserError{Internal: err.Error() + " line 125"}
 	}
 	// commit changes
 	t.Commit()
@@ -184,7 +184,6 @@ func checkValuesForAdding(tx *sqlx.Tx, email, password string) *UserError {
 
 // UserExists checks if user exists in passed database. Pass tx if you want to use a Tx, pass a database if you want a Tx created in the function
 func UserExists(email string, tx *sqlx.Tx, db *sqlx.DB) (bool, *User, error) {
-	fmt.Print(email)
 	if tx == nil {
 		tx = db.MustBegin()
 	}
@@ -201,6 +200,22 @@ func UserExists(email string, tx *sqlx.Tx, db *sqlx.DB) (bool, *User, error) {
 		return false, nil, nil
 	}
 	return true, &(*u)[0], nil
+}
+
+// UserByID gets an user by id
+func UserByID(id uint32, db *sqlx.DB) *User {
+	tx := db.MustBegin()
+	u := &[]User{}
+	e := tx.Select(u, "SELECT email, id, isgoogleaccount FROM users WHERE id=$1 LIMIT 1", id)
+	if e != nil {
+		fmt.Println(e.Error())
+		return nil
+	}
+	tx.Commit()
+	if len(*u) == 0 {
+		return nil
+	}
+	return &(*u)[0]
 }
 
 // Encrypts password
