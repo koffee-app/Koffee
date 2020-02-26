@@ -49,8 +49,8 @@ type UserError struct {
 	Token    string `json:"token,omitempty"`
 }
 
-// Initialize initializes table
-func Initialize(db *sqlx.DB) {
+// InitializeUsers initializes table
+func InitializeUsers(db *sqlx.DB) {
 	t := db.MustBegin()
 	_, _ = t.Exec(userSchema)
 	_ = t.Commit()
@@ -61,7 +61,7 @@ func (u *UserError) Message() string {
 	return `Error with authenticating user, see more information in data fields.`
 }
 
-// AddUser tries to insert a new User into the database via
+// AddUser tries to insert a new User into the database
 func AddUser(db *sqlx.DB, email, password string, isGoogleAccount bool) (*User, *UserError) {
 	if !isGoogleAccount {
 		return addUserNoGoogle(db, email, password)
@@ -72,6 +72,7 @@ func AddUser(db *sqlx.DB, email, password string, isGoogleAccount bool) (*User, 
 // LogUserNotGoogle Tries to log in via email password way, if the stored user is a google acc this will
 // return an error.
 func LogUserNotGoogle(db *sqlx.DB, email, password string) (*User, *UserError) {
+
 	u := User{}
 	users := &[]User{}
 	t := db.MustBegin()

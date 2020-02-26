@@ -16,8 +16,8 @@ var countries map[string]CountryCode
 
 // Country returns the country code of the code (2 LETTERS CODE.)
 func Country(s string) (CountryCode, bool) {
-	c := countries[s]
-	return c, c.Alpha2 != ""
+	c, OK := countries[s]
+	return c, OK
 }
 
 // Init initializes the countries map

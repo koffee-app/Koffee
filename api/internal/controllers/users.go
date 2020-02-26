@@ -33,7 +33,7 @@ type userImpl struct {
 func InitializeUserController(api *Group, router *httprouter.Router, db *sqlx.DB) {
 	u := userImpl{db: db}
 	userGroup := New(api, "/user")
-	models.Initialize(u.db)
+	// models.Initialize(u.db)
 	test.OAUTHGoogle(router)
 	router.POST(userGroup.Route("/login"), u.loginHandle)
 	router.POST(userGroup.Route("/register"), u.registerHandle)

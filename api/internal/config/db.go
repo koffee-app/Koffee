@@ -31,7 +31,7 @@ func StartConfigDB() *sqlx.DB {
 		fmt.Println(err)
 	}
 
-	fmt.Print("POSTGRES CONNECTED!")
+	fmt.Println("POSTGRES CONNECTED!")
 
 	return db
 }

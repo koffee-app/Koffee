@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"koffee/internal/config"
 	"koffee/internal/controllers"
+	"koffee/internal/models"
 	"koffee/internal/view"
-	"log"
 	"net/http"
 
 	"github.com/jmoiron/sqlx"
@@ -13,6 +13,9 @@ import (
 )
 
 func startServer(db *sqlx.DB) {
+	// initialize tables
+	models.Initialize(db)
+	// initialize controllers
 	router := httprouter.New()
 	router.GET("/", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		view.PrepareJSON(w, 200)
@@ -20,8 +23,12 @@ func startServer(db *sqlx.DB) {
 	})
 	group := controllers.Group{Prefix: "/api"}
 	controllers.InitializeUserController(&group, router, db)
+	controllers.InitializeDriverController(&group, router, db)
+	// Inform that we finished intiializing
 	fmt.Println("Connected on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", router))
+	if http.ListenAndServe(":8080", router) != nil {
+		fmt.Println("error")
+	}
 }
 
 func main() {
