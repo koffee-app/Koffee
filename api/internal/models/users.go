@@ -46,10 +46,11 @@ type UserError struct {
 	Password string `json:"password"`
 	Email    string `json:"email"`
 	Internal string `json:"internal"`
+	Token    string `json:"token,omitempty"`
 }
 
-// Initialize initializes table
-func Initialize(db *sqlx.DB) {
+// InitializeUsers initializes table
+func InitializeUsers(db *sqlx.DB) {
 	t := db.MustBegin()
 	_, _ = t.Exec(userSchema)
 	_ = t.Commit()
@@ -60,17 +61,18 @@ func (u *UserError) Message() string {
 	return `Error with authenticating user, see more information in data fields.`
 }
 
-// AddUser tries to insert a new User into the database via
+// AddUser tries to insert a new User into the database
 func AddUser(db *sqlx.DB, email, password string, isGoogleAccount bool) (*User, *UserError) {
 	if !isGoogleAccount {
 		return addUserNoGoogle(db, email, password)
 	}
-	return nil, nil
+	return addUserGoogle(db, email)
 }
 
 // LogUserNotGoogle Tries to log in via email password way, if the stored user is a google acc this will
 // return an error.
 func LogUserNotGoogle(db *sqlx.DB, email, password string) (*User, *UserError) {
+
 	u := User{}
 	users := &[]User{}
 	t := db.MustBegin()
@@ -96,9 +98,10 @@ func LogUserNotGoogle(db *sqlx.DB, email, password string) (*User, *UserError) {
 		return nil, &UserError{Password: "Incorrect credentials."}
 	}
 
-	u = *UserJWTToUser(auth.NewUserJWT(email, u.UserID))
-	u.Token, e = auth.GenerateTokenJWT(email, u.UserID)
-	u.Token = fmt.Sprintf("Bearer %s", u.Token)
+	token, e := auth.GenerateTokenJWT(email, u.UserID)
+	u.Token = fmt.Sprintf("Bearer %s", token)
+	u.SessionExpiresAt = auth.ExpiresAt()
+
 	if e != nil {
 		return nil, &UserError{Email: "Incorrect user credentials?", Internal: e.Error(), Password: "Error generating token"}
 	}
@@ -120,14 +123,14 @@ func addUserNoGoogle(db *sqlx.DB, email, password string) (*User, *UserError) {
 	// insert the user and tget the lastID
 	err := t.QueryRowx("INSERT INTO users (email, password, isgoogleaccount) VALUES ($1, $2, $3) RETURNING id", email, p, false).Scan(&lastID)
 	if err != nil {
-		return nil, &UserError{Internal: err.Error() + " line 72"}
+		return nil, &UserError{Internal: err.Error() + " line 125"}
 	}
 	// commit changes
 	t.Commit()
 	// generate token
 	token, _ := auth.GenerateTokenJWT(email, uint32(lastID))
 	// return newly generated user
-	return &User{Password: sql.NullString{String: p}, IsGoogleAccount: false, Email: email, NewAccount: true, Token: fmt.Sprintf("Bearer %s", token), UserID: uint32(lastID)}, nil
+	return &User{Password: sql.NullString{String: p}, IsGoogleAccount: false, Email: email, NewAccount: true, Token: fmt.Sprintf("Bearer %s", token), UserID: uint32(lastID), SessionExpiresAt: auth.ExpiresAt()}, nil
 }
 
 // compares hashed and nonhashed passwords and if they are equal returns true
@@ -163,24 +166,57 @@ func checkValuesForAdding(tx *sqlx.Tx, email, password string) *UserError {
 	if bad {
 		return e
 	}
-	// Start checking if the email exists.
-	u := &[]User{}
-	// Check if email already exists.
-	err := tx.Select(u, "SELECT email, password FROM users WHERE email=$1 LIMIT 1", email)
+
+	exists, _, err := UserExists(email, tx, nil)
+
 	if err != nil {
 		fmt.Println(err.Error())
 		e.Internal = err.Error()
 		return e
 	}
-	tx.Commit()
 
-	// If it does not exist all is fine.
-	if len(*u) == 0 {
+	if !exists {
 		return nil
 	}
 
 	e.Email = `User already exists!`
 	return e
+}
+
+// UserExists checks if user exists in passed database. Pass tx if you want to use a Tx, pass a database if you want a Tx created in the function
+func UserExists(email string, tx *sqlx.Tx, db *sqlx.DB) (bool, *User, error) {
+	if tx == nil {
+		tx = db.MustBegin()
+	}
+	u := &[]User{}
+	// Check if email already exists.
+	err := tx.Select(u, "SELECT email, id, isgoogleaccount FROM users WHERE email=$1 LIMIT 1", email)
+	if err != nil {
+		fmt.Println(err.Error())
+		return false, nil, err
+	}
+	tx.Commit()
+	// If it does not exist all is fine.
+	if len(*u) == 0 {
+		return false, nil, nil
+	}
+	return true, &(*u)[0], nil
+}
+
+// UserByID gets an user by id
+func UserByID(id uint32, db *sqlx.DB) *User {
+	tx := db.MustBegin()
+	u := &[]User{}
+	e := tx.Select(u, "SELECT email, id, isgoogleaccount FROM users WHERE id=$1 LIMIT 1", id)
+	if e != nil {
+		fmt.Println(e.Error())
+		return nil
+	}
+	tx.Commit()
+	if len(*u) == 0 {
+		return nil
+	}
+	return &(*u)[0]
 }
 
 // Encrypts password
