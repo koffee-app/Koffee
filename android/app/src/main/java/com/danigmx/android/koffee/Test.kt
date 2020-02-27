@@ -10,8 +10,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 
 class ReqLogin {
-    public val email: String = "example@gmail.com"
-    public val password: String = "123456example"
+    val email: String = "example@gmail.com"
+    val password: String = "123456example"
 
     fun json(): JSONObject {
         val json: JSONObject = JSONObject()
@@ -29,7 +29,7 @@ class Test() {
         val req: Request = Request.Builder()
             .url("${url}/api/user/login")
             .post(a.toString().toRequestBody(mediaType))
-            .build();
+            .build()
         val response = client.newCall(req).execute()
         Log.d("tag", response.body.toString())
     }
