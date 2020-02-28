@@ -1,7 +1,7 @@
 /**
  * Created by Daniel Gracia Machado on 2020-02-11.
  */
-package com.danigmx.android.koffee
+package com.danigmx
 
 import android.util.Log
 import okhttp3.*
