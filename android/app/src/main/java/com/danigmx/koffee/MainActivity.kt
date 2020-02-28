@@ -1,4 +1,4 @@
-package com.danigmx
+package com.danigmx.koffee
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -15,4 +15,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     // More to come...
+    init {
+        System.loadLibrary("keys")
+    }
+
+    external fun getMapsSdkApiKey()
 }

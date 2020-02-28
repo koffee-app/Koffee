@@ -8,7 +8,7 @@ android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
     defaultConfig {
-        applicationId "com.danigmx.android.koffee"
+        applicationId "com.danigmx.koffee.koffee"
         minSdkVersion 21
         targetSdkVersion 29
         versionCode 1
@@ -21,18 +21,24 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    externalNativeBuild {
+        ndkBuild {
+            path 'src/main/jni/Android.mk'
+        }
+    }
 }
 
 dependencies {
+    // Project structure
+    api project(':core')
+
     // Libs
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation android_libs.values()
-    api project(':core')
 
     // Tests
     testImplementation android_tests.values()
 
     // Test implementations
     androidTestImplementation android_test_implementations.values()
-
 }
