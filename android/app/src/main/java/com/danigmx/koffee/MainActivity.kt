@@ -1,7 +1,8 @@
-package com.danigmx.android.koffee
+package com.danigmx.koffee
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import com.danigmx.koffee.koffee.R
 
 class MainActivity : AppCompatActivity() {
 
@@ -13,7 +14,10 @@ class MainActivity : AppCompatActivity() {
         test.request("http://localhost:8080")
     }
 
-
-
     // More to come...
+    init {
+        System.loadLibrary("keys")
+    }
+
+    external fun getMapsSdkApiKey()
 }

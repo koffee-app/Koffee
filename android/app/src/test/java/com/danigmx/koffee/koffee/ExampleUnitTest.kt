@@ -1,4 +1,4 @@
-package com.danigmx.android.koffee
+package com.danigmx.koffee.koffee
 
 import org.junit.Test
 
