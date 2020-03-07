@@ -49,8 +49,12 @@ func GenerateTokenJWT(email string, id uint32) (string, error) {
 
 // TokenValid str
 func TokenValid(r *http.Request) (*UserJWT, error) {
-	tokenStr := ParseToken(r)
+	token := ParseToken(r)
+	return VerifyToken(token)
+}
 
+// VerifyToken Verifies a token string
+func VerifyToken(tokenStr string) (*UserJWT, error) {
 	if tokenStr == "" {
 		return nil, fmt.Errorf("Invalid token, empty or invalid format in Authorization header")
 	}

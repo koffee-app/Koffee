@@ -6,6 +6,7 @@ import (
 	"koffee/internal/models"
 	view "koffee/internal/view"
 	"net/http"
+	"strconv"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/julienschmidt/httprouter"
@@ -29,6 +30,7 @@ func InitializeDriverController(api *Group, router *httprouter.Router, db *sqlx.
 	d := driverImpl{db: db}
 	driverGroup := New(api, "/driver")
 	router.POST(driverGroup.Route("/"), middleware.JwtAuthentication(d.createDriver))
+	router.GET(driverGroup.Route("/:id"), d.getDriver)
 }
 
 // createDriver creates a new driver handler
@@ -48,8 +50,24 @@ func (d *driverImpl) createDriver(w http.ResponseWriter, r *http.Request, _ http
 	}
 	dsucc, derr := models.CreateDriver(d.db, dbody.UserID, dbody.Fullname, dbody.Country)
 	if derr != nil {
-		view.Error(w, "Error creating driver.", http.StatusBadRequest, derr)
+		view.Error(w, "Error creating driver", http.StatusBadRequest, derr)
 		return
 	}
 	view.Driver(w, dsucc)
+}
+
+// todo (GABI) Testing
+func (d *driverImpl) getDriver(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	id := params[0].Value
+	idInt, er := strconv.Atoi(id)
+	if er != nil {
+		view.Error(w, "Error, invalid iD", http.StatusBadRequest, er)
+		return
+	}
+	driver := models.GetDriverByID(d.db, uint32(idInt))
+	if driver == nil {
+		view.Error(w, "Error, driver doesn't exist by that ID", http.StatusBadRequest, er)
+		return
+	}
+	view.Driver(w, driver)
 }
