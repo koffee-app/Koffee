@@ -13,7 +13,9 @@
   "dependencies": {
     "@types/next": "^9.0.0",
     "@types/react": "^16.9.23",
+    "@types/ws": "^7.2.2",
     "@zeit/next-typescript": "^1.1.1",
+    "isomorphic-ws": "^4.0.1",
     "next": "^9.2.2",
     "next-redux-wrapper": "^5.0.0",
     "react": "^16.13.0",
@@ -21,9 +23,13 @@
     "react-redux": "^7.2.0",
     "redux": "^4.0.5",
     "redux-devtools-extension": "^2.13.8",
-    "redux-thunk": "^2.3.0"
+    "redux-thunk": "^2.3.0",
+    "universal-websocket-client": "^1.0.2",
+    "websocket": "^1.0.31",
+    "ws": "^7.2.1"
   },
   "devDependencies": {
+    "@babel/plugin-proposal-decorators": "^7.8.3",
     "@types/node": "^13.9.0",
     "typescript": "^3.8.3"
   }
