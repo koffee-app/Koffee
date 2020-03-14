@@ -14,9 +14,10 @@ import (
 
 // ConnectionData For a new connection or closed connection
 type ConnectionData struct {
-	Address string
-	ID      uint64
-	Headers map[string][]byte
+	Address    string
+	ID         uint64
+	Headers    map[string][]byte
+	Connection net.Conn
 }
 
 // Message struct
@@ -104,16 +105,19 @@ func handleConnection(c connection, ln net.Listener, pool *pool.Pool, u *ws.Upgr
 		c.conn = conn
 		connectionData := &ConnectionData{Address: conn.RemoteAddr().String(), ID: unique.Int()}
 		c.onOpen(connectionData)
-		pool.Schedule(handler(&c, conn, connectionData))
+		pool.Schedule(handler(&c, conn, connectionData, pool))
 	}
 }
 
-func handler(c *connection, conn net.Conn, connection *ConnectionData) func() {
+// initialize handler for messages from client
+func handler(c *connection, conn net.Conn, connection *ConnectionData, pool *pool.Pool) func() {
 	return func() {
 		desc := netpoll.Must(netpoll.HandleRead(conn))
 		poller.Start(desc, func(ev netpoll.Event) {
+			// pool.Schedule(func() {
 			// Prepare function for closing the connection
-			closer := func() {
+			close := func() {
+				fmt.Println("Closed messaging")
 				conn.Close()
 				poller.Stop(desc)
 				c.onClose(connection)
@@ -123,32 +127,33 @@ func handler(c *connection, conn net.Conn, connection *ConnectionData) func() {
 			// closed at least write end of the connection or connections
 			// itself. So we want to stop receive events about such conn.
 			if ev&(netpoll.EventReadHup|netpoll.EventHup) != 0 {
-				closer()
+				close()
 				return
 			}
 			b, code, e := wsutil.ReadClientData(conn)
 			// Error means close connection
 			if e != nil {
-				closer()
+				close()
 				return
 			}
 			// Continuation means close connection
 			if code == ws.OpContinuation {
-				closer()
+				close()
 				return
 			}
 			// Close means close connection
 			if code == ws.OpClose {
-				closer()
+				close()
 				return
 			}
 			// If error reading message close connection
 			if len(b) > 0 &&
 				iserr(c.onMessage(&Message{Data: b, ErrorConnection: e, ID: connection.ID, Conn: conn})) {
-				closer()
+				close()
 				return
 			}
 		})
+		// })
 	}
 }
 
@@ -210,14 +215,14 @@ func WSKoffeeHandle(conf Configuration, connectionHandler func(Connection)) erro
 	desc := netpoll.Must(netpoll.HandleListener(ln, netpoll.EventRead|netpoll.EventOneShot))
 	pool := pool.NewPool(conf.PoolSize, conf.QueueSize, conf.Spawn)
 	c := connection{onClose: func(*ConnectionData) {}, onOpen: func(*ConnectionData) {}, onMessage: func(*Message) error { return nil }}
+	// Initialize onClose, onOpen and onMessage by the user.
 	connectionHandler(&c)
 	unique := uniqueRand{}
-
 	// Main listener. We get rid of the for loop that affects performance a lot.
 	poller.Start(desc, func(e netpoll.Event) {
 		errorScheduling := pool.ScheduleTimeout(time.Millisecond, func() {
 			conn, err := ln.Accept()
-			connectionData := &ConnectionData{Address: conn.RemoteAddr().String(), ID: unique.Int(), Headers: nil}
+			connectionData := &ConnectionData{Address: conn.RemoteAddr().String(), ID: unique.Int(), Headers: nil, Connection: conn}
 			if err != nil {
 				fmt.Println(err)
 				conn.Close()
@@ -248,7 +253,8 @@ func WSKoffeeHandle(conf Configuration, connectionHandler func(Connection)) erro
 			}
 			c.conn = conn
 			c.onOpen(connectionData)
-			pool.Schedule(handler(&c, conn, connectionData))
+			// add to the pool of threads the handler
+			pool.Schedule(handler(&c, conn, connectionData, pool))
 		})
 
 		if iserr(errorScheduling) {

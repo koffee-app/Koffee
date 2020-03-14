@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"koffee/pkg/websocketkoffee"
 	"log"
-	"os/exec"
 	"sync"
 )
 
@@ -100,12 +99,13 @@ func main() {
 		c.OnOpen(func(cc *websocketkoffee.ConnectionData) {
 			fmt.Printf("Opened %d\n", cc.ID)
 			addConcurrent()
+			websocketkoffee.Write(cc.Connection, []byte("fff"))
 		})
 		c.OnMessage(func(m *websocketkoffee.Message) error {
 			fmt.Printf("Message %d: %s\n", m.ID, m.Data)
-			websocketkoffee.Write(m.Conn, []byte("Yes/...."))
-			e := exec.Command("clear")
-			e.Run()
+			websocketkoffee.Write(m.Conn, []byte(m.Data))
+			// e := exec.Command("clear")
+			// e.Run()
 			return nil
 		})
 	}); wserr != nil {

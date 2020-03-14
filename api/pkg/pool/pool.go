@@ -54,7 +54,7 @@ func (p *Pool) schedule(task func(), timeout <-chan time.Time) error {
 		return ErrScheduleTimeout
 	case p.work <- task:
 		return nil
-		// So this should never run
+		// So this...
 	case p.sem <- struct{}{}:
 		go p.worker(task)
 		return nil
