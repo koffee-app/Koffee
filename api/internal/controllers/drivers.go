@@ -1,5 +1,9 @@
 package controllers
 
+/**
+ * ! THIS IS DEPRECATED, KOFFEE IS GONNA BE A STREAMING PLATFORM FOR MUSIC.
+ */
+
 import (
 	"encoding/json"
 	"koffee/internal/middleware"

@@ -1,6 +1,6 @@
 # Koffee
 
-#### The Open source Uber/Lyft-like app!
+#### Koffee will be a open source music streaming platform.
 
 #### More to come...
 

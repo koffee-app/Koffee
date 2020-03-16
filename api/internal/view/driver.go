@@ -1,5 +1,7 @@
 package view
 
+//! !!!!!! DEPRECATED
+
 import (
 	"koffee/internal/models"
 	"net/http"

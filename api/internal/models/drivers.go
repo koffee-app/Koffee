@@ -8,6 +8,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+//! !!!!!! DEPRECATED
+
 const driverSchema = `
 	CREATE TABLE drivers (
 		fullname text,
