@@ -18,12 +18,13 @@ func startServer(db *sqlx.DB) {
 	// initialize controllers
 	router := httprouter.New()
 	router.GET("/", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		view.PrepareJSON(w, 200)
+		view.PrepareJSON(w, http.StatusOK)
 		view.ReturnJSON(w, view.FormatJSON(nil, "Test succeeded! You can use Koffee!", 200))
 	})
 	group := controllers.Group{Prefix: "/api"}
 	controllers.InitializeUserController(&group, router, db)
 	controllers.InitializeDriverController(&group, router, db)
+	controllers.InitializeProfileService(&group, router, db)
 	// Inform that we finished intiializing
 	fmt.Println("Connected on port 8080")
 	if http.ListenAndServe(":8080", router) != nil {

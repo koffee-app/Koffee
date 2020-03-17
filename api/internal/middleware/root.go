@@ -20,7 +20,5 @@ func GetUser(r *http.Request) *models.User {
 
 // Authorization middleware
 func Authorization(h httprouter.Handle) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		JwtAuthentication(h)
-	}
+	return JwtAuthentication(h)
 }
