@@ -26,8 +26,8 @@ func startServer(db *sqlx.DB) {
 	controllers.InitializeDriverController(&group, router, db)
 	controllers.InitializeProfileService(&group, router, db)
 	// Inform that we finished intiializing
-	fmt.Println("Connected on port 8080")
-	if http.ListenAndServe(":8080", router) != nil {
+	fmt.Println("Connected on port 8081")
+	if http.ListenAndServe(":8081", router) != nil {
 		fmt.Println("error")
 	}
 }

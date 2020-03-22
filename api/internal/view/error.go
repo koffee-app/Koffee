@@ -39,3 +39,10 @@ func Error(w http.ResponseWriter, message string, code uint16, err interface{}) 
 	PrepareJSON(w, code)
 	ReturnJSON(w, response)
 }
+
+// ErrorJSON is used when there is an error parsin the body
+func ErrorJSON(w http.ResponseWriter, err interface{}) {
+	response := ResponseJSON{StatusCode: http.StatusBadRequest, Message: "Bad request body, error parsing body", Data: err}
+	PrepareJSON(w, http.StatusBadRequest)
+	ReturnJSON(w, response)
+}

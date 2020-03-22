@@ -45,7 +45,7 @@ type GoogleErrorResponse struct {
 	ErrorDescription string `json:"error_description"`
 }
 
-// GoogleAuthentication which returns a GoogleAuthResponse or GoogleErrorResponse if the token is wrong,
+// GoogleAuthentication which returns a GoogleAuthResponse or GoogleErrorResponse if the token is wrong, sends a request to google servers to check if the token is fine
 // don't use this in highly frequented requests or middleware because it's gonna be expensive! Only for one time verif.
 func GoogleAuthentication(token string) (*GoogleAuthResponse, *GoogleErrorResponse, error) {
 	client := http.Client{}
@@ -69,7 +69,7 @@ func GoogleAuthentication(token string) (*GoogleAuthResponse, *GoogleErrorRespon
 	return &rsucc, nil, nil
 }
 
-// Adds a Google User, check if it exists
+// Adds a Google User, checks if it exists in our db and if it does return error
 // todo Check more errors.
 func addUserGoogle(db *sqlx.DB, email string) (*User, *UserError) {
 	doesExist, _, _ := UserExists(email, nil, db)
@@ -106,6 +106,7 @@ func LogUserGoogle(db *sqlx.DB, token string) (*User, *UserError) {
 	}
 
 	if u == nil {
+		// TODO: (GABI) Delete panic
 		panic("Something bad happened inside UserExists()")
 	}
 

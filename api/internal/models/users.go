@@ -1,10 +1,3 @@
-// todo: VerifyUser(email string, encryptedPassword string) -> if it exists and its a google account return bad login
-// todo: VerifyUserGoogle(email string, token string) -> for checking the user in the db, if it exists and its not a google account change it as one or inform the user. If it
-//																												does not exist, create it as a google acc and return as a NewAccount
-// todo: GetUserByEmail(email string, getEncryptedPassword bool)
-// todo: GetUserByID(id uint32, getEncryptedPassword bool)
-// todo: AddUser(email string, password string, isGoogleAccount bool) -> if it's google account check that password is empty
-
 package models
 
 import (

@@ -6,4 +6,5 @@ import "github.com/jmoiron/sqlx"
 func Initialize(db *sqlx.DB) {
 	InitializeDrivers(db)
 	InitializeUsers(db)
+	InitializeProfile(db)
 }
