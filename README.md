@@ -4,4 +4,4 @@
 
 #### More to come...
 
-Made by @gabivlj and @DaniGMX
+Made by @gabivlj @DaniGMX and Kiara De Leon

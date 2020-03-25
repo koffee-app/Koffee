@@ -18,6 +18,7 @@ type profileBody struct {
 	Age         uint64 `json:"age,omitempty"`
 	ImageURL    string `json:"imageurl,omitempty"`
 	Description string `json:"description,omitempty"`
+	Name        string `json:"name,omitempty`
 }
 
 type profileController struct {
@@ -39,7 +40,7 @@ func (p *profileController) createProfile(w http.ResponseWriter, r *http.Request
 		view.ErrorJSON(w, err)
 		return
 	}
-	profile, errProfile := models.CreateProfile(p.db, body.Username, logedUser.UserID, body.Artist)
+	profile, errProfile := models.CreateProfile(p.db, body.Username, body.Name, logedUser.UserID, body.Artist)
 	if errProfile != nil {
 		view.ProfileError(w, errProfile)
 		return

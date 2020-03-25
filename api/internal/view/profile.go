@@ -6,25 +6,20 @@ import (
 )
 
 type profileJSON struct {
-	Username    string `json:"username,omitempty"`
-	UserID      uint32 `json:"id,omitempty"`
-	Artist      bool   `json:"artist"`
-	Age         uint64 `json:"age,omitempty"`
-	ImageURL    string `json:"imageurl,omitempty"`
-	Description string `json:"description,omitempty"`
+	Username       string `json:"username,omitempty"`
+	Name           string `json:"name,omitempty"`
+	UserID         uint32 `json:"id,omitempty"`
+	Artist         bool   `json:"artist,omitempty"`
+	Location       string `json:"location,omitempty"`
+	HeaderImageURL string `json:"headerimageurl,omitempty"`
+	ImageURL       string `json:"imageurl,omitempty"`
+	Description    string `json:"description,omitempty"`
 }
 
 // Profile Renders profile JSON
 func Profile(w http.ResponseWriter, profile *models.Profile) {
-	age, _ := profile.Age.Value()
-	var ageUint uint64
-	if age == nil {
-		ageUint = 0
-	} else {
-		ageUint = age.(uint64)
-	}
 	PrepareJSON(w, http.StatusOK)
-	ReturnJSON(w, FormatJSON(profileJSON{Username: profile.Username, UserID: profile.UserID, Artist: profile.Artist, Age: ageUint, ImageURL: profile.ImageURL.String, Description: profile.Description.String}, "Success", http.StatusOK))
+	ReturnJSON(w, FormatJSON(profileJSON{Username: profile.Username, UserID: profile.UserID, Artist: profile.Artist, Location: profile.Location.String, ImageURL: profile.ImageURL.String, HeaderImageURL: profile.HeaderImageURL.String, Description: profile.Description.String, Name: profile.Name}, "Success", http.StatusOK))
 }
 
 // ProfileError Renders profile error json
