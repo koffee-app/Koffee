@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"fmt"
+	"koffee/pkg/formatter"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -38,6 +39,11 @@ type Profile struct {
 	Description    sql.NullString `db:"description"`
 }
 
+// GetSingleProfile returns a single profile if it found it else nil
+func (p *Profile) GetSingleProfile(db *sqlx.DB, useArtist bool) *Profile {
+	return wrapP(GetProfiles(db, p, useArtist, 1))
+}
+
 // ProfileError is an error that will be returned when there is an error.
 type ProfileError struct {
 	Name     string `json:"name"`
@@ -59,7 +65,7 @@ func CreateProfile(db *sqlx.DB, username, name string, id uint32, artist bool) (
 	if err := checkFieldsCreate(username, name); err != nil {
 		return nil, err
 	}
-	profile := wrapP(getProfile(db, &Profile{UserID: id, Username: username}))
+	profile := wrapP(GetProfiles(db, &Profile{UserID: id, Username: username}, false, 1))
 	if profile != nil {
 		if profile.UserID == id {
 			return nil, &ProfileError{UserID: fmt.Sprintf("%d UserID already exists", id)}
@@ -84,13 +90,18 @@ func CreateProfile(db *sqlx.DB, username, name string, id uint32, artist bool) (
 
 // GetProfileByUsername returns a profile by username
 func GetProfileByUsername(db *sqlx.DB, username string) *Profile {
-	profile := wrapP(getProfile(db, &Profile{Username: username}))
+	profile := wrapP(GetProfiles(db, &Profile{Username: username}, false, 1))
 	return profile
+}
+
+// GetSingleProfile returns a single profile if it found it else nil
+func GetSingleProfile(db *sqlx.DB, profile *Profile, useArtist bool) *Profile {
+	return wrapP(GetProfiles(db, profile, useArtist, 1))
 }
 
 // GetProfileByUserID returns a profile by userID
 func GetProfileByUserID(db *sqlx.DB, userID uint32) *Profile {
-	profile := wrapP(getProfile(db, &Profile{UserID: userID}))
+	profile := wrapP(GetProfiles(db, &Profile{UserID: userID}, false, 1))
 	return profile
 }
 
@@ -101,30 +112,54 @@ func wrapP(profile *[]Profile) *Profile {
 	return nil
 }
 
-// Gets a profile by username or userID, will use OR if it username and id are both used.
-func getProfile(db *sqlx.DB, profile *Profile) *[]Profile {
+// GetProfiles Gets profiles
+// !FIXME this is totally overengineered
+func GetProfiles(db *sqlx.DB, profile *Profile, useArtistSearch bool, limit int) *[]Profile {
 	var profiles []Profile
 	tx := db.MustBegin()
 	var varToUse profileFind
 	builder := strings.Builder{}
-	if profile.Username != "" {
-		builder.WriteString("(username=$1")
-		varToUse.fields = append(varToUse.fields, profile.Username)
-	}
-	if profile.UserID != 0 {
-		if profile.Username != "" {
-			builder.WriteString(" OR userid=$2)")
-		} else {
-			builder.WriteString("(userid=$1)")
-		}
-		varToUse.fields = append(varToUse.fields, profile.UserID)
-	} else {
-		builder.WriteByte(')')
-	}
+
+	formatter.FormatSQL(
+		profile.Username != "",
+		len(varToUse.fields),
+		"username",
+		"",
+		&builder,
+		false,
+		func() {
+			varToUse.fields = append(varToUse.fields, profile.Username)
+		},
+	)
+
+	formatter.FormatSQL(
+		profile.UserID != 0,
+		len(varToUse.fields),
+		"userid",
+		"OR",
+		&builder,
+		false,
+		func() {
+			varToUse.fields = append(varToUse.fields, profile.UserID)
+		},
+	)
+
+	formatter.FormatSQL(
+		useArtistSearch,
+		len(varToUse.fields),
+		"artist",
+		"AND",
+		&builder,
+		true,
+		func() {
+			varToUse.fields = append(varToUse.fields, profile.Artist)
+		},
+	)
+
 	varToUse.fieldNames = builder.String()
 	query := fmt.Sprintf("SELECT * FROM profiles WHERE %s", varToUse.fieldNames)
 	fmt.Println(query, varToUse.fields)
-	e := tx.Select(&profiles, query, varToUse.fields...)
+	e := tx.Select(&profiles, fmt.Sprintf("%s LIMIT %d", query, limit), varToUse.fields...)
 	if e != nil {
 		fmt.Printf("Error getting a profile: " + e.Error())
 		return &profiles

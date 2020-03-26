@@ -16,10 +16,29 @@ type profileJSON struct {
 	Description    string `json:"description,omitempty"`
 }
 
+type profilesJSON struct {
+	Profiles []profileJSON `json:"profiles"`
+}
+
+// profileModelToJSON .
+func profileModelToJSON(prof *models.Profile) profileJSON {
+	return profileJSON{Username: prof.Username, UserID: prof.UserID, Artist: prof.Artist, Location: prof.Location.String, ImageURL: prof.ImageURL.String, HeaderImageURL: prof.HeaderImageURL.String, Description: prof.Description.String, Name: prof.Name}
+}
+
 // Profile Renders profile JSON
 func Profile(w http.ResponseWriter, profile *models.Profile) {
 	PrepareJSON(w, http.StatusOK)
-	ReturnJSON(w, FormatJSON(profileJSON{Username: profile.Username, UserID: profile.UserID, Artist: profile.Artist, Location: profile.Location.String, ImageURL: profile.ImageURL.String, HeaderImageURL: profile.HeaderImageURL.String, Description: profile.Description.String, Name: profile.Name}, "Success", http.StatusOK))
+	ReturnJSON(w, FormatJSON(profileModelToJSON(profile), "Success", http.StatusOK))
+}
+
+// Profiles return multiple profiles
+func Profiles(w http.ResponseWriter, profilesModel []models.Profile) {
+	profiles := profilesJSON{Profiles: make([]profileJSON, len(profilesModel))}
+	for i, prof := range profilesModel {
+		profiles.Profiles[i] = profileModelToJSON(&prof)
+	}
+	PrepareJSON(w, http.StatusOK)
+	ReturnJSON(w, FormatJSON(profiles, "Success", http.StatusOK))
 }
 
 // ProfileError Renders profile error json
@@ -28,5 +47,5 @@ func ProfileError(w http.ResponseWriter, err *models.ProfileError) {
 		Error(w, "Internal error, more details in data!", http.StatusNotFound, err)
 		return
 	}
-	Error(w, "Error, more detailts in data", http.StatusBadRequest, err)
+	Error(w, "Error, more details in data", http.StatusBadRequest, err)
 }
