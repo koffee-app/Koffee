@@ -59,7 +59,7 @@ func AddUser(db *sqlx.DB, email, password string, isGoogleAccount bool) (*User, 
 	if !isGoogleAccount {
 		return addUserNoGoogle(db, email, password)
 	}
-	return addUserGoogle(db, email)
+	return addUserGoogleWithEmailCheck(db, email)
 }
 
 // LogUserNotGoogle Tries to log in via email password way, if the stored user is a google acc this will

@@ -1,0 +1,2 @@
+INSERT INTO person (first_name, last_name, email, id, indexer) VALUES ('The weeknd', 'weeknd', 'weekdn@gmail.com', 303, 
+ to_tsvector('english', 'The weeknd' || ' ' || 'weeknd' || 'weekdn@gmail.com'));

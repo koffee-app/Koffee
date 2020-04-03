@@ -71,11 +71,15 @@ func GoogleAuthentication(token string) (*GoogleAuthResponse, *GoogleErrorRespon
 
 // Adds a Google User, checks if it exists in our db and if it does return error
 // todo Check more errors.
-func addUserGoogle(db *sqlx.DB, email string) (*User, *UserError) {
+func addUserGoogleWithEmailCheck(db *sqlx.DB, email string) (*User, *UserError) {
 	doesExist, _, _ := UserExists(email, nil, db)
 	if doesExist {
 		return nil, &UserError{Email: "User already exists"}
 	}
+	return addUserGoogle(db, email)
+}
+
+func addUserGoogle(db *sqlx.DB, email string) (*User, *UserError) {
 	tx := db.MustBegin()
 	var lastID int
 	_ = tx.QueryRowx("INSERT INTO users (email, password, isgoogleaccount) VALUES ($1, $2, $3) RETURNING id", email, "", true).Scan(lastID)
@@ -102,7 +106,7 @@ func LogUserGoogle(db *sqlx.DB, token string) (*User, *UserError) {
 	}
 
 	if !exists {
-		return nil, &UserError{Email: "User does not exist!"}
+		return addUserGoogle(db, succres.Email)
 	}
 
 	if u == nil {
@@ -110,9 +114,10 @@ func LogUserGoogle(db *sqlx.DB, token string) (*User, *UserError) {
 		panic("Something bad happened inside UserExists()")
 	}
 
-	if !u.IsGoogleAccount {
-		return nil, &UserError{Email: "User is not a Google account!"}
-	}
+	// todo ??? this
+	// if !u.IsGoogleAccount {
+	// 	return nil, &UserError{Email: "User is not a Google account!"}
+	// }
 
 	u.Token, _ = auth.GenerateTokenJWT(succres.Email, uint32(u.UserID))
 	u.Token = auth.Bearify(u.Token)

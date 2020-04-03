@@ -3,22 +3,24 @@ import {
   HandlerOnMessage,
   WebSocketComponent,
   HandlerOnOpen,
-  IMessage,
-  WS
+  IMessage
 } from './websocket';
 import { MessageEvent, OpenEvent } from 'ws';
-import { updateAnnouncement } from '../states/announcement/actions';
+import { actions } from '../store';
 
 class TestWSComp extends WebSocketComponent {
   @HandlerOnOpen()
   onConnection(_: TWebSocket, __: OpenEvent) {
-    WS.store.dispatch<any>(updateAnnouncement('HEMO conectao'));
+    const methods = actions;
+    console.log('worked');
+    methods.setAnnouncement('worked');
   }
 
   @HandlerOnMessage(`chat.message`)
   onChatMsg(_: TWebSocket, __: MessageEvent, messageParsed: IMessage) {
+    const methods = actions;
     console.log(messageParsed);
-    WS.store.dispatch<any>(updateAnnouncement('HEMOS RECIBIDO UN MENSAJE'));
+    methods.setAnnouncement(`The new msg is: ${messageParsed.data}`);
   }
 
   public static sendChatMessage() {}

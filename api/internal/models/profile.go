@@ -120,7 +120,7 @@ func GetProfiles(db *sqlx.DB, profile *Profile, useArtistSearch bool, limit int)
 	var varToUse profileFind
 	builder := strings.Builder{}
 
-	formatter.FormatSQL(
+	formatter.FormatWhereQuery(
 		profile.Username != "",
 		len(varToUse.fields),
 		"username",
@@ -132,7 +132,7 @@ func GetProfiles(db *sqlx.DB, profile *Profile, useArtistSearch bool, limit int)
 		},
 	)
 
-	formatter.FormatSQL(
+	formatter.FormatWhereQuery(
 		profile.UserID != 0,
 		len(varToUse.fields),
 		"userid",
@@ -144,7 +144,7 @@ func GetProfiles(db *sqlx.DB, profile *Profile, useArtistSearch bool, limit int)
 		},
 	)
 
-	formatter.FormatSQL(
+	formatter.FormatWhereQuery(
 		useArtistSearch,
 		len(varToUse.fields),
 		"artist",

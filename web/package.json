@@ -20,13 +20,7 @@
     "next-redux-wrapper": "^5.0.0",
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
-    "react-redux": "^7.2.0",
-    "redux": "^4.0.5",
-    "redux-devtools-extension": "^2.13.8",
-    "redux-thunk": "^2.3.0",
-    "universal-websocket-client": "^1.0.2",
-    "websocket": "^1.0.31",
-    "ws": "^7.2.1"
+    "zustand": "^2.2.3"
   },
   "devDependencies": {
     "@babel/plugin-proposal-decorators": "^7.8.3",

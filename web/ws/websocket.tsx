@@ -1,5 +1,6 @@
-import { Store } from 'redux';
 import WSocket, { OpenEvent, MessageEvent } from 'isomorphic-ws';
+
+export class WebSocketComponent {}
 
 export type TWebSocket = WSocket;
 // init;x
@@ -27,12 +28,8 @@ export class WS {
   private _handlersOnOpen: Array<HandlerOpen>;
   // todo(GABI): This will change
   private _url: string = `wss://echo.websocket.org`;
-  private _store: Store;
   private static _instance: WS;
 
-  static get store(): Store {
-    return this._instance._store;
-  }
   private _ws: TWebSocket;
 
   public constructor() {
@@ -52,11 +49,6 @@ export class WS {
   /**
    * Public methods
    */
-
-  public static initializeStore(store: Store) {
-    if (this._instance._store) return;
-    this._instance._store = store;
-  }
 
   public addHandler(route: string, func: any) {
     this._handlers[route] = func;
@@ -110,11 +102,4 @@ export function HandlerOnOpen() {
     ws.addHandlerOpen(descriptor.value);
   };
   return fn;
-}
-
-export class WebSocketComponent {
-  private static _store: Store = WS.store;
-  static get store() {
-    return WebSocketComponent._store;
-  }
 }
