@@ -1,0 +1,5 @@
+.env
+/.env
+*/.env
+key.txt
+*/key.txt
