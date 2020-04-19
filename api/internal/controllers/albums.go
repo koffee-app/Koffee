@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/streadway/amqp"
@@ -138,9 +139,9 @@ func (a *albumController) getOwnedAlbum(w http.ResponseWriter, r *http.Request, 
 func (a *albumController) updateAlbum(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	user := middleware.GetUser(r)
 	values := r.URL.Query()
-	des := values.Get("description")
-	publish := values.Get("published")
-	name := values.Get("name")
+	des := strings.Trim(values.Get("description"), " ")
+	publish := strings.Trim(values.Get("published"), " ")
+	name := strings.Trim(values.Get("name"), " ")
 	albumID := params.ByName("id")
 	IDu64, _ := strconv.ParseUint(albumID, 10, 32)
 	album, err := a.repository.UpdateAlbum(user.UserID, uint32(IDu64), publish, des, name, "")

@@ -186,10 +186,10 @@ func (r *albumRepository) GetProfileAlbumsByUsername(username string, published 
 // GetAlbumsByUserID return all albums which were done by the user
 func (r *albumRepository) GetAlbumsByUserID(userID uint32, afterID int, beforeID int, nItems int) ([]Album, *AlbumError) {
 	var albums []Album
-	orderBy := "albums.id > $3"
+	orderBy := "albums.id > $2"
 	id := afterID
 	if beforeID != 0 && afterID == 0 {
-		orderBy = "albums.id < $3"
+		orderBy = "albums.id < $2"
 		id = beforeID
 	}
 	s := fmt.Sprintf("SELECT albums.name, id, artists, coverurl, albums.description, published, uploaddate, profiles.userid, count(*) OVER() AS fullcount FROM albums, profiles WHERE userid=$1 AND profiles.username=ANY(albums.artists) AND %s ORDER BY albums.uploaddate ASC LIMIT $3", orderBy)
