@@ -41,3 +41,11 @@ type RepositoryAlbums interface {
 	UpdateAlbum(userID uint32, albumID uint32, publish string, description string, name string, coverURL string) (*Album, *AlbumError)
 	GetAlbumsByUserIDPublish(userID uint32, published bool, afterID int, beforeID int, nItems int) ([]Album, *AlbumError)
 }
+
+// RepositoryImages saves the image urls, its object type, and the related identifier.
+type RepositoryImages interface {
+	// CreateOrUpdateImage tries to find an image in the table, if it exists it updates it
+	CreateOrUpdateImage(id uint32, urlXL, urlMed, urlSm string, typeImage ImageTypes) (*Image, *ImageError)
+	GetImage(id uint32, typeImage ImageTypes) *Image
+	DeleteImage(id uint32, typeImage ImageTypes) *ImageError
+}

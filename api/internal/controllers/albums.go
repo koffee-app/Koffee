@@ -170,7 +170,7 @@ func (a *albumController) changeCoverURL(msg *amqp.Delivery) {
 	}
 }
 
-// (after, nItems)
+// (after, beforeN, nItems)
 func retrievePaginationValues(values *url.Values) (int, int, int) {
 	after := values.Get("after")
 	nItems := values.Get("nitems")

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/jmoiron/sqlx"
@@ -10,7 +11,7 @@ import (
 type Image struct {
 	ID     uint32 `db:"id"`
 	XlURL  string `db:"xlurl"`
-	MedURL string `db:"mdurl"`
+	MedURL string `db:"medurl"`
 	SmURL  string `db:"smurl"`
 	// ProfileImage, CoverImage, HeaderImage, HeaderImageAlbum...
 	Type string `db:"type"`
@@ -24,10 +25,11 @@ type ImageError struct {
 const schemaImg = `
 	CREATE TABLE images (
 		id integer,
-		xlurl text,
-		medurl text,
-		smurl text,
-		type text
+		xlurl text NOT NULL,
+		medurl text NOT NULL,
+		smurl text NOT NULL,
+		type text,
+		UNIQUE (id, type)
 	)
 `
 
@@ -59,11 +61,11 @@ type imageRepository struct {
 }
 
 // InitializeImages .
-func InitializeImages(db *sqlx.DB) {
+func InitializeImages(db *sqlx.DB) RepositoryImages {
 	t := db.MustBegin()
 	t.Exec(schemaImg)
 	t.Commit()
-	// return &imageRepository{db: db}
+	return &imageRepository{db: db}
 }
 
 // CreateOrUpdateImage tries to find an image in the table, if it exists it updates it
@@ -73,7 +75,7 @@ func (i *imageRepository) CreateOrUpdateImage(id uint32, urlXL, urlMed, urlSm st
 		return nil, &ImageError{}
 	}
 	tx := i.db.MustBegin()
-	_, err := tx.Exec("INSERT INTO images (id, xlurl, medurl, smurl, type) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id, type) DO UPDATE SET xlurl=$2, medurl=$3, smurl=$4", id, urlXL, urlMed, urlSm, typeImg)
+	_, err := tx.Exec("INSERT INTO images (id, xlurl, medurl, smurl, type) VALUES ($1, $2, $3, $4, $5) ON CONFLICT  (id, type) DO UPDATE SET xlurl=EXCLUDED.xlurl, medurl=EXCLUDED.medurl, smurl=$4", id, urlXL, urlMed, urlSm, typeImg)
 	if err != nil {
 		return nil, &ImageError{Internal: err.Error()}
 	}
@@ -84,6 +86,30 @@ func (i *imageRepository) CreateOrUpdateImage(id uint32, urlXL, urlMed, urlSm st
 	return &Image{ID: id, XlURL: urlXL, MedURL: urlMed, SmURL: urlSm, Type: typeImg}, nil
 }
 
+func (i *imageRepository) DeleteImage(id uint32, typeImage ImageTypes) *ImageError {
+	typeImg := getImageType(typeImage)
+	if typeImg == "" {
+		return &ImageError{}
+	}
+	tx := i.db.MustBegin()
+	var uid uint32
+	row := tx.QueryRowx("DELETE FROM images WHERE id=$1 AND type=$2 RETURNING id", id, typeImg).Scan(&uid)
+
+	if row != nil && row.Error() != "" {
+		return &ImageError{Internal: row.Error()}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return &ImageError{Internal: err.Error()}
+	}
+
+	if uid != id {
+		return &ImageError{Internal: fmt.Sprintf("Uid is not equal to id, %d != %d", uid, id)}
+	}
+
+	return nil
+}
+
 func (i *imageRepository) GetImage(id uint32, typeImage ImageTypes) *Image {
 	typeImg := getImageType(typeImage)
 	if typeImg == "" {
@@ -91,7 +117,7 @@ func (i *imageRepository) GetImage(id uint32, typeImage ImageTypes) *Image {
 	}
 	var images []Image
 	tx := i.db.MustBegin()
-	err := tx.Select(&images, "SELECT * FROM images WHERE id=$1 AND type=$2")
+	err := tx.Select(&images, "SELECT * FROM images WHERE id=$1 AND type=$2", id, typeImg)
 	if err != nil {
 		log.Println(err)
 		return nil
