@@ -22,6 +22,7 @@ type RepositoryProfiles interface {
 	GetProfileByUsername(username string) *Profile
 	GetProfileByUserID(userID uint32) *Profile
 	GetProfiles(profile *Profile, useArtistSearch bool, limit int) *[]Profile
+	UpdateProfile(username string, description string, artist string, id uint32, name string) (*Profile, *ProfileError)
 }
 
 // RepositoryAlbums interface

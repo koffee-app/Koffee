@@ -17,13 +17,23 @@ import (
 )
 
 type albumBody struct {
-	Name        string   `json:"name,omitempty"`
-	CoverURL    string   `json:"coverurl,omitempty"`
-	Description string   `json:"description,omitempty"`
-	Published   bool     `json:"published,omitempty"`
-	Artists     []string `json:"artists,omitempty"`
-	UserID      uint32   `json:"user_id,omitempty"`
-	ID          uint32   `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	CoverURL    string `json:"coverurl,omitempty"`
+	Description string `json:"description,omitempty"`
+	Published   bool   `json:"published,omitempty"`
+	// *NOTE: Do we _really_ need this? We might just put this from our side and call it a day.
+	Artists []string `json:"artists,omitempty"`
+	// *WARNING: We might encounter integer overflows if we don't specify integer sth
+	UserID uint32 `json:"user_id,omitempty"`
+	ID     uint32 `json:"id,omitempty"`
+}
+
+func (a *albumBody) sanitize() {
+	a.Name = strings.TrimSpace(a.Name)
+	a.Description = strings.TrimSpace(a.Description)
+	for i := range a.Artists {
+		a.Artists[i] = strings.TrimSpace(a.Artists[i])
+	}
 }
 
 type albumController struct {
@@ -62,6 +72,7 @@ func (a *albumController) createAlbum(w http.ResponseWriter, r *http.Request, _ 
 		view.AlbumError(w, &models.AlbumError{Internal: "Bad body request"})
 		return
 	}
+	body.sanitize()
 	if album, albumErr := a.repository.CreateAlbum(user.UserID, body.Name, body.Artists, body.Description); albumErr != nil {
 		view.AlbumError(w, albumErr)
 	} else {
@@ -88,12 +99,9 @@ func (a *albumController) getPublicAlbum(w http.ResponseWriter, r *http.Request,
 
 func (a *albumController) getPublicAlbums(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	values := r.URL.Query()
-
 	profile := params.ByName("profile")
 	after, before, nItems := retrievePaginationValues(&values)
-
 	albums, err := a.repository.GetProfileAlbumsByUsername(profile, true, after, before, nItems)
-
 	if err != nil {
 		view.AlbumError(w, err)
 		return
@@ -138,13 +146,16 @@ func (a *albumController) getOwnedAlbum(w http.ResponseWriter, r *http.Request, 
 
 func (a *albumController) updateAlbum(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	user := middleware.GetUser(r)
-	values := r.URL.Query()
-	des := strings.Trim(values.Get("description"), " ")
-	publish := strings.Trim(values.Get("published"), " ")
-	name := strings.Trim(values.Get("name"), " ")
+	var body albumBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		view.Error(w, "Error parsing request body", http.StatusBadRequest, err)
+		return
+	}
+	body.sanitize()
+	publish := strconv.FormatBool(body.Published)
 	albumID := params.ByName("id")
 	IDu64, _ := strconv.ParseUint(albumID, 10, 32)
-	album, err := a.repository.UpdateAlbum(user.UserID, uint32(IDu64), publish, des, name, "")
+	album, err := a.repository.UpdateAlbum(user.UserID, uint32(IDu64), publish, body.Description, body.Name, "")
 	if err != nil {
 		view.AlbumError(w, err)
 		return

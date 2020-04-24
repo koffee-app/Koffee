@@ -8,6 +8,7 @@ import (
 	view "koffee/internal/view"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -20,6 +21,13 @@ type profileBody struct {
 	ImageURL    string `json:"imageurl,omitempty"`
 	Description string `json:"description,omitempty"`
 	Name        string `json:"name,omitempty"`
+}
+
+// Generalized function for sanitizing body for requests of this controller
+func (p *profileBody) sanitize() {
+	p.Description = strings.TrimSpace(p.Description)
+	p.Username = strings.ToLower(strings.TrimSpace(p.Username))
+	p.Name = strings.TrimSpace(p.Name)
 }
 
 type profileController struct {
@@ -43,6 +51,7 @@ func (p *profileController) createProfile(w http.ResponseWriter, r *http.Request
 		view.ErrorJSON(w, err)
 		return
 	}
+	body.sanitize()
 	profile, errProfile := p.profileRepo.CreateProfile(body.Username, body.Name, logedUser.UserID, body.Artist)
 	if errProfile != nil {
 		view.ProfileError(w, errProfile)
@@ -67,7 +76,7 @@ func (p *profileController) getProfile(w http.ResponseWriter, r *http.Request, p
 		profile.Artist = isArtist[0] == "true"
 	}
 	if len(byUsername) > 0 && byUsername[0] == "true" {
-		profile.Username = identifier
+		profile.Username = strings.ToLower(identifier)
 	} else if len(byID) > 0 && byID[0] == "true" {
 		id, err := strconv.Atoi(identifier)
 		if err != nil {
@@ -83,6 +92,24 @@ func (p *profileController) getProfile(w http.ResponseWriter, r *http.Request, p
 		return
 	}
 	view.Profile(w, profileRef)
+}
+
+func (p *profileController) updateProfile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	var profile profileBody
+	err := json.NewDecoder(r.Body).Decode(&profile)
+	if err != nil {
+		view.Error(w, "Error parsing body", http.StatusBadRequest, err)
+		return
+	}
+	artist := strconv.FormatBool(profile.Artist)
+	profile.sanitize()
+	usr := middleware.GetUser(r)
+	profileRes, profileError := p.profileRepo.UpdateProfile(profile.Username, profile.Description, artist, usr.UserID, profile.Name)
+	if profileError != nil {
+		view.ProfileError(w, profileError)
+		return
+	}
+	view.Profile(w, profileRes)
 }
 
 /**

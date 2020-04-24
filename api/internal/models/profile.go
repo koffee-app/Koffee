@@ -192,3 +192,28 @@ func checkFieldsCreate(username, name string) *ProfileError {
 	}
 	return nil
 }
+
+// UpdateProfile .
+func (r *repoProfiles) UpdateProfile(username string, description string, artist string, id uint32, name string) (*Profile, *ProfileError) {
+	if username != "" && r.GetProfileByUsername(username) != nil {
+		return nil, &ProfileError{Username: "Username already exists!"}
+	}
+	tx := r.db.MustBegin()
+	profile := Profile{}
+	values := make([]interface{}, 0)
+	str := strings.Builder{}
+	values = formatter.IfTrueAdd(&str, name != "", "name", name, values)
+	values = formatter.IfTrueAdd(&str, username != "", "username", username, values)
+	values = formatter.IfTrueAdd(&str, description != "", "description", description, values)
+	values = formatter.IfTrueAdd(&str, artist != "", "artist", artist == "true", values)
+	s := fmt.Sprintf("UPDATE profiles SET %s WHERE userid=$%d RETURNING profiles.userid, profiles.username, profiles.description, profiles.artist, profiles.age, profile.name", str.String(), len(values)-1)
+	row := tx.QueryRowx(s, values...).Scan(&profile.UserID, &profile.Username, &profile.Description, &profile.Artist)
+	if row != nil && row.Error() != "" {
+		return nil, &ProfileError{Internal: row.Error()}
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, &ProfileError{Internal: err.Error()}
+	}
+
+	return &profile, nil
+}

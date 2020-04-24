@@ -54,7 +54,7 @@ func (p *pasetoService) GenerateToken(email string, id uint32, duration uint64) 
 
 	token.Set("email", email)
 	token.Set("id", idStr)
-	tokenStr, err := paseto.NewV2().Sign(privateKey, token, "some footer")
+	tokenStr, err := paseto.NewV2().Sign(privateKey, token, "")
 	if err != nil {
 		return "", err
 	}

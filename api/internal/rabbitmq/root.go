@@ -102,9 +102,10 @@ func (m *messageListenerRabbitMQ) Stop() {
 
 // Initialize inits RabbitMQ subscription
 func Initialize() MessageListener {
+	// TODO: Set this via ENV
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 	if err != nil {
-		return nil
+		panic(err)
 	}
 	channel, err := conn.Channel()
 	rabbitPool := pool.NewPool(50, 25, 25)
