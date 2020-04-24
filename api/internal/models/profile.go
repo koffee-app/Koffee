@@ -38,6 +38,9 @@ type Profile struct {
 	Location       sql.NullString `db:"location"`
 	HeaderImageURL sql.NullString `db:"headerimageurl"`
 	Description    sql.NullString `db:"description"`
+
+	ProfileImage *Image `json:"profile_image"`
+	HeaderImage  *Image `json:"header_image"`
 }
 
 // ProfileError is an error that will be returned when there is an error.
@@ -54,15 +57,16 @@ func (p *Profile) getSingleProfile(r *repoProfiles, useArtist bool) *Profile {
 }
 
 type repoProfiles struct {
-	db *sqlx.DB
+	db        *sqlx.DB
+	imageRepo RepositoryImages
 }
 
 // InitializeProfile initializes tables if necessary of profiles
-func InitializeProfile(db *sqlx.DB) RepositoryProfiles {
+func InitializeProfile(db *sqlx.DB, imageRepo RepositoryImages) RepositoryProfiles {
 	tx := db.MustBegin()
 	tx.Exec(schema)
 	tx.Commit()
-	return &repoProfiles{db: db}
+	return &repoProfiles{db: db, imageRepo: imageRepo}
 }
 
 func (r *repoProfiles) SingleProfile(p *Profile, useArtist bool) *Profile {
@@ -101,6 +105,20 @@ func (r *repoProfiles) CreateProfile(username, name string, id uint32, artist bo
 // GetProfileByUsername returns a profile by username
 func (r *repoProfiles) GetProfileByUsername(username string) *Profile {
 	profile := wrapP(r.GetProfiles(&Profile{Username: username}, false, 1))
+	return profile
+}
+
+func (r *repoProfiles) GetImage(profile *Profile) *Profile {
+	imgs, _ := r.imageRepo.GetImagesSameID(profile.UserID, ProfileImage, HeaderImage)
+	if len(imgs) > 1 {
+		profile.ProfileImage = &imgs[0]
+		profile.HeaderImage = &imgs[1]
+	}
+	if len(imgs) == 1 && imgs[0].Type == getImageType(ProfileImage) {
+		profile.ProfileImage = &imgs[0]
+	} else if len(imgs) == 1 && imgs[0].Type == getImageType(HeaderImage) {
+		profile.HeaderImage = &imgs[0]
+	}
 	return profile
 }
 

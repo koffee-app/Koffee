@@ -22,7 +22,7 @@ func startServer(db *sqlx.DB) {
 
 	middleware.Initialize(tokenService)
 	// initialize repos
-	users, profiles, albums := models.Initialize(db, tokenService)
+	users, profiles, albums, _ := models.Initialize(db, tokenService)
 	// TODO Put this in a single function that tests everything we want
 	repository.TestCreateAlbum(profiles, albums, db)
 	// initialize controllers

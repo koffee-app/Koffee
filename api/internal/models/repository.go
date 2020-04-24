@@ -23,6 +23,7 @@ type RepositoryProfiles interface {
 	GetProfileByUserID(userID uint32) *Profile
 	GetProfiles(profile *Profile, useArtistSearch bool, limit int) *[]Profile
 	UpdateProfile(username string, description string, artist string, id uint32, name string) (*Profile, *ProfileError)
+	GetImage(profile *Profile) *Profile
 }
 
 // RepositoryAlbums interface
@@ -48,4 +49,5 @@ type RepositoryImages interface {
 	CreateOrUpdateImage(id uint32, urlXL, urlMed, urlSm string, typeImage ImageTypes) (*Image, *ImageError)
 	GetImage(id uint32, typeImage ImageTypes) *Image
 	DeleteImage(id uint32, typeImage ImageTypes) *ImageError
+	GetImagesSameID(id uint32, typeImages ...ImageTypes) ([]Image, *ImageError)
 }

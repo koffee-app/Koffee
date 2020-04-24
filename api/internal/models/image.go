@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"koffee/pkg/formatter"
 	"log"
 
 	"github.com/jmoiron/sqlx"
@@ -131,4 +132,23 @@ func (i *imageRepository) GetImage(id uint32, typeImage ImageTypes) *Image {
 		return nil
 	}
 	return &images[0]
+}
+
+func (i *imageRepository) GetImagesSameID(id uint32, typeImages ...ImageTypes) ([]Image, *ImageError) {
+	typeImagesStr := make([]string, len(typeImages))
+	for i := range typeImages {
+		typeImagesStr[i] = getImageType(typeImages[i])
+	}
+	queryStr, array := formatter.Array(len(typeImages), "type", typeImagesStr)
+	tx := i.db.MustBegin()
+	var images []Image
+	err := tx.Select(&images, fmt.Sprintf("SELECT * FROM images WHERE %s and id=%d", queryStr, id), array...)
+	if err != nil {
+		return nil, &ImageError{Internal: err.Error()}
+	}
+	err = tx.Commit()
+	if err != nil {
+		return nil, &ImageError{Internal: err.Error()}
+	}
+	return images, nil
 }
