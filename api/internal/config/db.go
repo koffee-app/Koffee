@@ -16,7 +16,7 @@ func returnConfigSQLString() string {
 	hostDB, _ := os.LookupEnv("DB_HOST")
 	portDB, _ := os.LookupEnv("DB_PORT")
 	s := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable password=%s", hostDB, portDB, userDB, nameDB, password)
-	fmt.Println(s)
+	// fmt.Println(s)
 	return s
 }
 

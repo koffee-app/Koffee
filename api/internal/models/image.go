@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 // Image representation in the database
@@ -151,4 +152,27 @@ func (i *imageRepository) GetImagesSameID(id uint32, typeImages ...ImageTypes) (
 		return nil, &ImageError{Internal: err.Error()}
 	}
 	return images, nil
+}
+
+// GetImagesFromIDs returns all the images specified in the ids and of the specified types
+func (i *imageRepository) GetImagesFromIDs(typeImages []ImageTypes, ids ...uint32) {
+	typeImagesStr := make([]string, len(typeImages))
+	for i := range typeImages {
+		typeImagesStr[i] = getImageType(typeImages[i])
+	}
+	queryStr, array := formatter.Array(len(typeImages), "type", typeImagesStr)
+	tx := i.db.MustBegin()
+	query := fmt.Sprintf("SELECT * FROM images WHERE id=ANY($%d) AND %s ORDER BY id ASC", len(array)+1, queryStr)
+	array = append(array, pq.Array(ids))
+	fmt.Println(query, array)
+	var images []Image
+	err := tx.Select(&images, query, array...)
+	if err != nil {
+		panic(err)
+	}
+	err = tx.Commit()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(images)
 }

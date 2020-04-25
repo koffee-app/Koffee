@@ -20,13 +20,17 @@ func BenchmarkImageCreation(b *testing.B) {
 		b.Errorf("Image not equal to the created or non existing")
 	}
 	fmt.Println(imgGet, img)
-	deletion := repo.DeleteImage(img.ID, models.CoverImage)
-	if deletion != nil {
-		fmt.Println(deletion)
-		panic("REMEMBER to delete this image because there was a mistake when deleting")
-	}
+	// deletion := repo.DeleteImage(img.ID, models.CoverImage)
+	// if deletion != nil {
+	// 	fmt.Println(deletion)
+	// 	panic("REMEMBER to delete this image because there was a mistake when deleting")
+	// }
 }
 
+func BenchmarkIn(b *testing.B) {
+	db := config.InitConfig()
+	models.InitializeImages(db).GetImagesFromIDs([]models.ImageTypes{models.CoverImage, models.ProfileImage}, 1, 2, 3, 4)
+}
 func BenchmarkImagesCreation(b *testing.B) {
 	db := config.InitConfig()
 	repo := models.InitializeImages(db)

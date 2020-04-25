@@ -50,4 +50,5 @@ type RepositoryImages interface {
 	GetImage(id uint32, typeImage ImageTypes) *Image
 	DeleteImage(id uint32, typeImage ImageTypes) *ImageError
 	GetImagesSameID(id uint32, typeImages ...ImageTypes) ([]Image, *ImageError)
+	GetImagesFromIDs(typeImages []ImageTypes, ids ...uint32)
 }

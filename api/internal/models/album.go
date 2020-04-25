@@ -36,7 +36,9 @@ type Album struct {
 	// OPTIONAL FIELD
 	ArtistNames []string
 	// OPTIONAL FIELD
-	ArtistName string `db:"artistname"`
+	ArtistName  string `db:"artistname"`
+	CoverImage  Image  `json:"cover_image"`
+	HeaderImage Image  `json:"header_image"`
 }
 
 // AlbumError model error
