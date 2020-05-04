@@ -43,6 +43,27 @@ func InitializeProfileController(routes *Group, router *httprouter.Router, profi
 	router.GET(group.Route("/:identifier"), p.getProfile)
 }
 
+// TODO: Test
+func (p *profileController) getProfilesByIds(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	parsedQuery := r.URL.Query()
+	ids := parsedQuery["ids"]
+	if len(ids) > 100 {
+		view.Error(w, "More than 100 ids are not allowed", 400, nil)
+		return
+	}
+	idsUint32 := make([]uint32, len(ids))
+	for idx := range ids {
+		id, err := strconv.ParseUint(ids[idx], 10, 32)
+		if err != nil {
+			view.Error(w, "ID is not a number", 400, err)
+			return
+		}
+		idsUint32[idx] = uint32(id)
+	}
+	profiles := p.profileRepo.GetProfilesByIDs(idsUint32)
+	view.Profiles(w, profiles)
+}
+
 func (p *profileController) createProfile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	logedUser := middleware.GetUser(r)
 	body := profileBody{}

@@ -40,6 +40,22 @@ func Array(n int, key string, array []string) (string, []interface{}) {
 	return stringBuilder.String(), newArray
 }
 
+// ArrayUint32 returns a string like (key=$1), nValues)
+func ArrayUint32(n int, key string, array []uint32) (string, []interface{}) {
+	stringBuilder := strings.Builder{}
+	stringBuilder.WriteByte('(')
+	newArray := make([]interface{}, len(array))
+	for idx := 0; idx < n; idx++ {
+		if idx > 0 {
+			stringBuilder.WriteString(" OR ")
+		}
+		stringBuilder.WriteString(fmt.Sprintf("%s=$%d", key, idx+1))
+		newArray[idx] = array[idx]
+	}
+	stringBuilder.WriteByte(')')
+	return stringBuilder.String(), newArray
+}
+
 func IfTrueAdd(str *strings.Builder, condition bool, key string, value interface{}, values []interface{}) []interface{} {
 	if condition {
 		len := len(values)

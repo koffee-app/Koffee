@@ -25,6 +25,7 @@ type RepositoryProfiles interface {
 	UpdateProfile(username string, description string, artist string, id uint32, name string) (*Profile, *ProfileError)
 	GetImage(profile *Profile) *Profile
 	GetProfilesImages(profiles []Profile) []Profile
+	GetProfilesByIDs(profileIDs []uint32) []Profile
 }
 
 // RepositoryAlbums interface

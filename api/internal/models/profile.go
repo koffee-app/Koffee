@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"koffee/pkg/formatter"
 	"koffee/pkg/logger"
+	"log"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -45,6 +46,15 @@ type Profile struct {
 
 // Profiles arr
 type Profiles []Profile
+
+// Zip zips the profiles like {1: {...profile...}}
+func (p Profiles) Zip() map[uint32]Profile {
+	dict := make(map[uint32]Profile, p.Len())
+	for _, profile := range p {
+		dict[profile.UserID] = profile
+	}
+	return dict
+}
 
 // Len Sorting impl.
 func (p Profiles) Len() int {
@@ -164,6 +174,37 @@ func mapProfilesToID(profiles []Profile) []uint32 {
 		ints[i] = profiles[i].UserID
 	}
 	return ints
+}
+
+func (r *repoProfiles) GetProfilesByIDs(profileIDs []uint32) []Profile {
+	tx := r.db.MustBegin()
+	// (userid=$1 OR userid=$2 ... OR userid=$N) - [1, 2, ..., n]
+	query, arr := formatter.ArrayUint32(len(profileIDs), "userid", profileIDs)
+	var profiles []Profile
+	err := tx.Select(&profiles, fmt.Sprintf("SELECT * FROM profiles WHERE %s", query), arr...)
+	if err != nil {
+		log.Println(err)
+		return []Profile{}
+	}
+	err = tx.Commit()
+	if err != nil {
+		log.Println(err)
+		return []Profile{}
+	}
+
+	// Zip profiles into a HashTable so we have O(1) accessing
+	zippedProfiles := Profiles(profiles).Zip()
+
+	// Order profiles as they were passed to the function
+	for idx := range profileIDs {
+		profiles[idx] = zippedProfiles[profileIDs[idx]]
+		// if there are some profiles that weren't found in the Select query
+		if idx+1 == len(profiles) {
+			break
+		}
+	}
+
+	return profiles
 }
 
 // GetProfilesImages updates the profiles array with the images, pass isSorted=false to sort byID
