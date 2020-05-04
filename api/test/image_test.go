@@ -31,6 +31,7 @@ func BenchmarkIn(b *testing.B) {
 	db := config.InitConfig()
 	models.InitializeImages(db).GetImagesFromIDs([]models.ImageTypes{models.CoverImage, models.ProfileImage}, 1, 2, 3, 4)
 }
+
 func BenchmarkImagesCreation(b *testing.B) {
 	db := config.InitConfig()
 	repo := models.InitializeImages(db)
@@ -60,7 +61,7 @@ func BenchmarkImagesCreation(b *testing.B) {
 	}
 	b.Log(imgs)
 	profile := repoProfiles.GetImage(&models.Profile{UserID: 2})
-	if profile.ProfileImage != nil && profile.HeaderImage == nil {
+	if profile.ProfileImage.SmURL != "" && profile.HeaderImage.SmURL != "" {
 		b.Log(profile.ProfileImage, profile.HeaderImage)
 	} else {
 		b.Log(profile.ProfileImage, profile.HeaderImage)

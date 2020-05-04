@@ -12,6 +12,15 @@ import (
 	"github.com/o1egl/paseto"
 )
 
+// Auth
+// 	Redis
+// USER ID -> { "ACCESS_TOKEN_0": { IP: ..., "refresh_token": ... }, ".."  }
+// Revoking -> retrieve Access Token, if it exists in the redis DB get the refresh token. If the refresh token is older than the target revoke, it won't revoke it.
+// Register -> Generate Access Token and Refresh Token. Save them like ^^
+// Login -> Generate Access Token and Refresh Token. Save them like ^^
+// Refresh -> Get access token that it's expired, check if it exists in the redis db. If it does compare with refresh_token the retrieved one. If they match, generate token.
+// Authorize-0 (0 sensibility, all gud) -> Get the access token and check its valid
+// Authorize-1 (1 risk, post delete and put requests) -> Get the access token and check in the redis db if it's not revoked.
 //
 // type Token interface {
 // 	// Generates a token

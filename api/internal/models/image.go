@@ -38,6 +38,23 @@ const schemaImg = `
 // ImageTypes is the available images
 type ImageTypes uint8
 
+// Images represents function for multiple images
+type Images []Image
+
+// Zip zips an array of images into a dictionary like { idOfImage: { ProfileImage: *Image } }
+func (i Images) Zip() map[uint32]map[ImageTypes]Image {
+	dict := make(map[uint32]map[ImageTypes]Image, len(i))
+	for _, img := range i {
+		mp, ok := dict[img.ID]
+		if !ok {
+			dict[img.ID] = map[ImageTypes]Image{StringToType(img.Type): img}
+		} else {
+			mp[StringToType(img.Type)] = img
+		}
+	}
+	return dict
+}
+
 const (
 	// ProfileImage type
 	ProfileImage ImageTypes = iota
@@ -48,6 +65,13 @@ const (
 	// HeaderImageAlbum type
 	HeaderImageAlbum
 )
+
+var stringToType = map[string]ImageTypes{"profile_image": ProfileImage, "cover_image": CoverImage, "header_image": HeaderImage, "header_image_album": HeaderImageAlbum}
+
+// StringToType parses a string into a image type
+func StringToType(s string) ImageTypes {
+	return stringToType[s]
+}
 
 var typeToString = []string{"profile_image", "cover_image", "header_image", "header_image_album"}
 
@@ -155,7 +179,7 @@ func (i *imageRepository) GetImagesSameID(id uint32, typeImages ...ImageTypes) (
 }
 
 // GetImagesFromIDs returns all the images specified in the ids and of the specified types
-func (i *imageRepository) GetImagesFromIDs(typeImages []ImageTypes, ids ...uint32) {
+func (i *imageRepository) GetImagesFromIDs(typeImages []ImageTypes, ids ...uint32) ([]Image, error) {
 	typeImagesStr := make([]string, len(typeImages))
 	for i := range typeImages {
 		typeImagesStr[i] = getImageType(typeImages[i])
@@ -164,15 +188,14 @@ func (i *imageRepository) GetImagesFromIDs(typeImages []ImageTypes, ids ...uint3
 	tx := i.db.MustBegin()
 	query := fmt.Sprintf("SELECT * FROM images WHERE id=ANY($%d) AND %s ORDER BY id ASC", len(array)+1, queryStr)
 	array = append(array, pq.Array(ids))
-	fmt.Println(query, array)
 	var images []Image
 	err := tx.Select(&images, query, array...)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	err = tx.Commit()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	fmt.Println(images)
+	return images, nil
 }

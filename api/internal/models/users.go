@@ -154,7 +154,8 @@ func (r *repoUsers) addUserNoGoogle(email, password string) (*User, *UserError) 
 	accessToken, _ := r.tokenizer.GenerateToken(email, uint32(lastID), 30)
 	accessToken = r.tokenizer.FormatSpecifics(accessToken)
 
-	refreshToken, _ := r.tokenizer.GenerateToken(email, uint32(lastID), 3000)
+	// TODO: put these in a redis DB for sessions
+	refreshToken, _ := r.tokenizer.GenerateToken(email, uint32(lastID), 3000000000)
 	refreshToken = r.tokenizer.FormatSpecifics(accessToken)
 
 	// return newly generated user

@@ -85,8 +85,8 @@ func (p *profileController) getProfile(w http.ResponseWriter, r *http.Request, p
 		}
 		profile.UserID = uint32(id)
 	}
-
 	profileRef := p.profileRepo.SingleProfile(&profile, useArtist)
+	profileRef = p.profileRepo.GetImage(profileRef)
 	if profileRef == nil {
 		view.ProfileError(w, &models.ProfileError{Internal: "Not found!"})
 		return

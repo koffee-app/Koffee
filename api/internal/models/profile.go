@@ -39,8 +39,26 @@ type Profile struct {
 	HeaderImageURL sql.NullString `db:"headerimageurl"`
 	Description    sql.NullString `db:"description"`
 
-	ProfileImage *Image `json:"profile_image"`
-	HeaderImage  *Image `json:"header_image"`
+	ProfileImage Image `json:"profile_image"`
+	HeaderImage  Image `json:"header_image"`
+}
+
+// Profiles arr
+type Profiles []Profile
+
+// Len Sorting impl.
+func (p Profiles) Len() int {
+	return len(p)
+}
+
+// Swap is a order swap
+func (p Profiles) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+
+// Less is a ordering func
+func (p Profiles) Less(i, j int) bool {
+	return p[i].UserID < p[j].UserID
 }
 
 // ProfileError is an error that will be returned when there is an error.
@@ -111,13 +129,13 @@ func (r *repoProfiles) GetProfileByUsername(username string) *Profile {
 func (r *repoProfiles) GetImage(profile *Profile) *Profile {
 	imgs, _ := r.imageRepo.GetImagesSameID(profile.UserID, ProfileImage, HeaderImage)
 	if len(imgs) > 1 {
-		profile.ProfileImage = &imgs[0]
-		profile.HeaderImage = &imgs[1]
+		profile.ProfileImage = imgs[0]
+		profile.HeaderImage = imgs[1]
 	}
 	if len(imgs) == 1 && imgs[0].Type == getImageType(ProfileImage) {
-		profile.ProfileImage = &imgs[0]
+		profile.ProfileImage = imgs[0]
 	} else if len(imgs) == 1 && imgs[0].Type == getImageType(HeaderImage) {
-		profile.HeaderImage = &imgs[0]
+		profile.HeaderImage = imgs[0]
 	}
 	return profile
 }
@@ -140,14 +158,52 @@ func wrapP(profile *[]Profile) *Profile {
 	return nil
 }
 
+func mapProfilesToID(profiles []Profile) []uint32 {
+	ints := make([]uint32, len(profiles))
+	for i := range profiles {
+		ints[i] = profiles[i].UserID
+	}
+	return ints
+}
+
+// GetProfilesImages updates the profiles array with the images, pass isSorted=false to sort byID
+func (r *repoProfiles) GetProfilesImages(profiles []Profile) []Profile {
+	images, err := r.imageRepo.GetImagesFromIDs([]ImageTypes{ProfileImage, HeaderImage}, mapProfilesToID(profiles)...)
+	if err != nil {
+		return profiles
+	}
+
+	dict := Images(images).Zip()
+
+	for idx := range profiles {
+		profile := &profiles[idx]
+
+		imageDict, ok := dict[profile.UserID]
+
+		if !ok {
+			continue
+		}
+
+		if headerImage, ok := imageDict[HeaderImage]; ok {
+			profile.HeaderImage = headerImage
+		}
+
+		if profileImage, ok := imageDict[ProfileImage]; ok {
+			profile.ProfileImage = profileImage
+		}
+	}
+
+	return profiles
+}
+
 // GetProfiles Gets profiles
-// !FIXME this is totally overengineered
 func (r *repoProfiles) GetProfiles(profile *Profile, useArtistSearch bool, limit int) *[]Profile {
 	var profiles []Profile
 	tx := r.db.MustBegin()
 	var varToUse profileFind
 	builder := strings.Builder{}
 
+	// (USERNAME=username
 	formatter.FormatWhereQuery(
 		profile.Username != "",
 		len(varToUse.fields),
@@ -160,6 +216,7 @@ func (r *repoProfiles) GetProfiles(profile *Profile, useArtistSearch bool, limit
 		},
 	)
 
+	// OR USERID=...
 	formatter.FormatWhereQuery(
 		profile.UserID != 0,
 		len(varToUse.fields),
@@ -172,6 +229,7 @@ func (r *repoProfiles) GetProfiles(profile *Profile, useArtistSearch bool, limit
 		},
 	)
 
+	// AND ARTIST=...
 	formatter.FormatWhereQuery(
 		useArtistSearch,
 		len(varToUse.fields),

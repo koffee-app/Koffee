@@ -13,5 +13,5 @@ import (
 func Initialize(db *sqlx.DB, tokenService auth.Token) (RepositoryUsers, RepositoryProfiles, RepositoryAlbums, RepositoryImages) {
 	// todo Reutrn all repos
 	images := InitializeImages(db)
-	return InitializeUsers(db, tokenService), InitializeProfile(db, images), InitializeAlbums(db), images
+	return InitializeUsers(db, tokenService), InitializeProfile(db, images), InitializeAlbums(db, images), images
 }

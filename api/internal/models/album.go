@@ -13,7 +13,8 @@ import (
 )
 
 type albumRepository struct {
-	db *sqlx.DB
+	db        *sqlx.DB
+	imageRepo RepositoryImages
 }
 
 // Album Database model
@@ -65,11 +66,52 @@ var albumSchema = `
 `
 
 // InitializeAlbums .
-func InitializeAlbums(db *sqlx.DB) RepositoryAlbums {
+func InitializeAlbums(db *sqlx.DB, repoImages RepositoryImages) RepositoryAlbums {
 	tx := db.MustBegin()
 	_, _ = tx.Exec(albumSchema)
 	_ = tx.Commit()
-	return &albumRepository{db: db}
+	return &albumRepository{db: db, imageRepo: repoImages}
+}
+
+func mapAlbumsToID(albums []Album) []uint32 {
+	ints := make([]uint32, len(albums))
+	for i := range albums {
+		ints[i] = albums[i].ID
+	}
+	return ints
+}
+
+func (r *albumRepository) GetAlbumsImages(albums []Album) []Album {
+	// GetProfilesImages updates the profiles array with the images, pass isSorted=false to sort byID
+	images, err := r.imageRepo.GetImagesFromIDs([]ImageTypes{CoverImage, HeaderImage}, mapAlbumsToID(albums)...)
+	if err != nil {
+		return albums
+	}
+	fmt.Println(images)
+	dict := Images(images).Zip()
+
+	fmt.Println(dict)
+
+	for idx := range albums {
+		album := &albums[idx]
+
+		imageDict, ok := dict[album.ID]
+
+		if !ok {
+			continue
+		}
+
+		if headerImage, ok := imageDict[HeaderImageAlbum]; ok {
+			album.HeaderImage = headerImage
+		}
+
+		if albumImage, ok := imageDict[CoverImage]; ok {
+			album.CoverImage = albumImage
+		}
+	}
+
+	return albums
+
 }
 
 // CreateAlbum creates an album, but it's not published yet so the user can edit it (add songs or change cover or header)

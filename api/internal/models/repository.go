@@ -24,6 +24,7 @@ type RepositoryProfiles interface {
 	GetProfiles(profile *Profile, useArtistSearch bool, limit int) *[]Profile
 	UpdateProfile(username string, description string, artist string, id uint32, name string) (*Profile, *ProfileError)
 	GetImage(profile *Profile) *Profile
+	GetProfilesImages(profiles []Profile) []Profile
 }
 
 // RepositoryAlbums interface
@@ -41,6 +42,7 @@ type RepositoryAlbums interface {
 	GetAlbumOwnedByIDPublish(id uint32, userID uint32, published bool) (*Album, *AlbumError)
 	UpdateAlbum(userID uint32, albumID uint32, publish string, description string, name string, coverURL string) (*Album, *AlbumError)
 	GetAlbumsByUserIDPublish(userID uint32, published bool, afterID int, beforeID int, nItems int) ([]Album, *AlbumError)
+	GetAlbumsImages(albums []Album) []Album
 }
 
 // RepositoryImages saves the image urls, its object type, and the related identifier.
@@ -50,5 +52,5 @@ type RepositoryImages interface {
 	GetImage(id uint32, typeImage ImageTypes) *Image
 	DeleteImage(id uint32, typeImage ImageTypes) *ImageError
 	GetImagesSameID(id uint32, typeImages ...ImageTypes) ([]Image, *ImageError)
-	GetImagesFromIDs(typeImages []ImageTypes, ids ...uint32)
+	GetImagesFromIDs(typeImages []ImageTypes, ids ...uint32) ([]Image, error)
 }
