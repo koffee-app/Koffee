@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"koffee/pkg/formatter"
 	"koffee/pkg/logger"
+	"log"
 	"strings"
 	"time"
 
@@ -40,6 +41,8 @@ type Album struct {
 	ArtistName  string `db:"artistname"`
 	CoverImage  Image  `json:"cover_image"`
 	HeaderImage Image  `json:"header_image"`
+	// Invitation microservices
+	EmailCreator string `json:"email_creator"`
 }
 
 // AlbumError model error
@@ -276,6 +279,19 @@ func (r *albumRepository) getAlbum(albums []Album, query string, params ...inter
 		return nil, nil
 	}
 	return &albums[0], nil
+}
+
+func (r *albumRepository) NewCollaborators(handlers []string, id uint32) *Album {
+	tx := r.db.MustBegin()
+
+	var album Album
+	err := tx.QueryRowx("UPDATE albums SET artists=$1 WHERE albums.id=$2 RETURNING albums.artists, albums.name, albums.description, albums.published, albums.coverurl, albums.uploaddate", pq.StringArray(handlers), id).Scan(&album.Artists, &album.Name, &album.Description, &album.Published, &album.CoverURL, &album.UploadDate)
+	tx.Commit()
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	return &album
 }
 
 func (r *albumRepository) UpdateAlbum(userID uint32, albumID uint32, publish string, description string, name string, coverURL string) (*Album, *AlbumError) {

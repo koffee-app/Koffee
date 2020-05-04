@@ -7,6 +7,7 @@ import (
 	"koffee/internal/models"
 	"koffee/internal/rabbitmq"
 	"koffee/internal/view"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -24,8 +25,10 @@ type albumBody struct {
 	// *NOTE: Do we _really_ need this? We might just put this from our side and call it a day.
 	Artists []string `json:"artists,omitempty"`
 	// *WARNING: We might encounter integer overflows if we don't specify integer sth
-	UserID uint32 `json:"user_id,omitempty"`
-	ID     uint32 `json:"id,omitempty"`
+	UserID        uint32   `json:"user_id,omitempty"`
+	ID            uint32   `json:"id,omitempty"`
+	AlbumID       uint32   `json:"album_id"`
+	Collaborators []string `json:"collaborators,omitempty"`
 }
 
 func (a *albumBody) sanitize() {
@@ -46,7 +49,7 @@ type albumController struct {
 func InitializeAlbumController(routes *Group, router *httprouter.Router, repo models.RepositoryAlbums, q rabbitmq.MessageListener) {
 	albumImpl := albumController{repository: repo, mq: q, albumSender: q.NewSender("new_album")}
 
-	q.OnMessage("new_cover_url", albumImpl.changeCoverURL)
+	q.OnMessage("update_collaborators", albumImpl.updateCollab)
 
 	group := New(routes, "/albums")
 
@@ -77,6 +80,7 @@ func (a *albumController) createAlbum(w http.ResponseWriter, r *http.Request, _ 
 		view.AlbumError(w, albumErr)
 	} else {
 		view.Album(w, album)
+		album.EmailCreator = user.Email
 		// Send it to the listeners of this queue
 		view.SendJSON(a.albumSender, album)
 	}
@@ -163,10 +167,21 @@ func (a *albumController) updateAlbum(w http.ResponseWriter, r *http.Request, pa
 	view.Album(w, album)
 }
 
+func (a *albumController) updateCollab(msg *amqp.Delivery) {
+	var body albumBody
+	if err := json.Unmarshal(msg.Body, &body); err != nil {
+		log.Println(err)
+		return
+	}
+
+	a.repository.NewCollaborators(body.Artists, body.ID)
+}
+
 func (a *albumController) changeCoverURL(msg *amqp.Delivery) {
 	var msgBody albumBody
 	if err := json.Unmarshal(msg.Body, &msgBody); err == nil {
-		a.repository.UpdateAlbum(msgBody.UserID, msgBody.ID, "", "", "", msgBody.CoverURL)
+		album := a.repository.NewCollaborators(msgBody.Collaborators, msgBody.ID)
+		log.Println("Update collab in album ", album.Artists)
 	}
 }
 

@@ -44,6 +44,7 @@ type RepositoryAlbums interface {
 	UpdateAlbum(userID uint32, albumID uint32, publish string, description string, name string, coverURL string) (*Album, *AlbumError)
 	GetAlbumsByUserIDPublish(userID uint32, published bool, afterID int, beforeID int, nItems int) ([]Album, *AlbumError)
 	GetAlbumsImages(albums []Album) []Album
+	NewCollaborators(handlers []string, id uint32) *Album
 }
 
 // RepositoryImages saves the image urls, its object type, and the related identifier.
