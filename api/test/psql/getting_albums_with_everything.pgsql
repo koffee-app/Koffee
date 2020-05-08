@@ -5,11 +5,17 @@ from (
     (
       select array_to_json(array_agg(row_to_json(d)))
       from (
-        select songs.name, songs.duration, songs.artists, 
+        select songs.name, songs.duration,  
         -- Fill artists
         (
-          SELECT array_to_json(array_agg(row_to_json(profiles))) FROM profiles
-                     WHERE profiles.username=ANY(songs.artists)
+          SELECT array_to_json(array_agg(row_to_json(profiles))) 
+          --  you can do directly this (but you cant specify fields)
+          -- FROM profiles
+          --            WHERE profiles.username=ANY(songs.artists)
+          -- Or you can do this which you specify fields
+          FROM (
+            SELECT profiles.name, profiles.username FROM profiles WHERE profiles.username=ANY(songs.artists)
+          ) profiles
         ) as artists
         from songs
         where songs.albumid=albums.id
