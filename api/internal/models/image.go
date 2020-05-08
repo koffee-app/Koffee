@@ -11,12 +11,12 @@ import (
 
 // Image representation in the database
 type Image struct {
-	ID     uint32 `db:"id"`
-	XlURL  string `db:"xlurl"`
-	MedURL string `db:"medurl"`
-	SmURL  string `db:"smurl"`
+	ID     uint32 `db:"id" json:"id"`
+	XlURL  string `db:"xlurl" json:"xlurl"`
+	MedURL string `db:"medurl" json:"medurl"`
+	SmURL  string `db:"smurl" json:"smurl"`
 	// ProfileImage, CoverImage, HeaderImage, HeaderImageAlbum...
-	Type string `db:"type"`
+	Type string `db:"type" json:"type"`
 }
 
 // ImageError .

@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"fmt"
+	"koffee/internal/db"
 	"koffee/pkg/formatter"
 	"koffee/pkg/logger"
 	"log"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/jmoiron/sqlx/types"
 	"github.com/lib/pq"
 )
 
@@ -321,4 +323,61 @@ func (r *albumRepository) UpdateAlbum(userID uint32, albumID uint32, publish str
 		return nil, &AlbumError{UserID: "Error finding an album"}
 	}
 	return &album, nil
+}
+
+/**
+{"name":"The great escape8","description":"Yes","published":false,"uploaddate":1587324025,"songs":null,"artists":[{"name":"Gabriel Villalonga","username":"gabivlj","userid":2,"artist":true,"imageurl":null,"headerimageurl":null,"description":null,"location":null}],"images":null}*/
+// AlbumJSON the album for unmarshaling Postgresql query
+type AlbumJSON struct {
+	ID          uint64        `json:"id"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Published   bool          `json:"published"`
+	UploadDate  uint64        `json:"uploaddate"`
+	Songs       []Song        `json:"songs,omitempty"`
+	Artists     []ProfileJSON `json:"artists"`
+	Images      []Image       `json:"images,omitempty"`
+}
+
+// AlbumDBJSON is a row
+type AlbumDBJSON struct {
+	Album types.JSONText `db:"album"`
+}
+
+// GetAlbumFull retrieves an album in a JSON manner
+// TODO: Test
+func (r *albumRepository) GetAlbumFull(albumID uint32, published bool) (*AlbumJSON, error) {
+	var albums AlbumDBJSON
+	tx := r.db.MustBegin()
+	err := tx.Get(&albums, db.GetAlbumFullInformation, albumID, published)
+	if err != nil {
+		return nil, fmt.Errorf("Error retrieving album %v", err)
+	}
+	err = tx.Commit()
+	if err != nil {
+		return nil, fmt.Errorf("Error retrieving album %v", err)
+	}
+	var album AlbumJSON
+	err = albums.Album.Unmarshal(&album)
+	if err != nil {
+		return nil, fmt.Errorf("Error unmarshaling album %v", err)
+	}
+	return &album, nil
+}
+
+// TODO: Test
+func (r *albumRepository) GetAlbumsFull(published bool, ids ...uint32) ([]AlbumJSON, error) {
+	var albums AlbumDBJSON
+	tx := r.db.MustBegin()
+	err := tx.Get(&albums, db.GetAlbumFullInformation, pq.Array(ids), published)
+	err = tx.Commit()
+	if err != nil {
+		return nil, fmt.Errorf("Error retrieving album %v", err)
+	}
+	var album []AlbumJSON
+	err = albums.Album.Unmarshal(&album)
+	if err != nil {
+		return nil, fmt.Errorf("Error unmarshaling album %v", err)
+	}
+	return album, nil
 }

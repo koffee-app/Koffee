@@ -1,12 +1,16 @@
+-- json cant have multiple fields next to it, thats why the fields are built with froms always
+-- When you wanna fill an attribute from another table you must open inside the from of the attribute a select with the desired data
+-- 
 select row_to_json(t)
 from (
+  -- Fill album
   select name,
-  -- Fill songs
+  -- Fill songs (This should be a method like add_songs_query(album_id))
     (
       select array_to_json(array_agg(row_to_json(d)))
       from (
         select songs.name, songs.duration,  
-        -- Fill artists
+        -- Fill artists field (This should be a method like add_artists(comparator))
         (
           SELECT array_to_json(array_agg(row_to_json(profiles))) 
           --  you can do directly this (but you cant specify fields)

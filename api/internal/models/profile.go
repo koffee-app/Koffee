@@ -29,6 +29,13 @@ type profileFind struct {
 	fieldNames string
 }
 
+// ProfileJSON is a profile
+type ProfileJSON struct {
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	UserID   uint32 `json:"userid"`
+}
+
 // Profile model
 type Profile struct {
 	Name           string         `db:"name"`
