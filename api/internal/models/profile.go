@@ -11,7 +11,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-const schema = `
+const schemaProfile = `
 	CREATE TABLE profiles (
 		name				 text,
 		username 		 text,
@@ -92,7 +92,7 @@ type repoProfiles struct {
 // InitializeProfile initializes tables if necessary of profiles
 func InitializeProfile(db *sqlx.DB, imageRepo RepositoryImages) RepositoryProfiles {
 	tx := db.MustBegin()
-	tx.Exec(schema)
+	tx.Exec(schemaProfile)
 	tx.Commit()
 	return &repoProfiles{db: db, imageRepo: imageRepo}
 }
