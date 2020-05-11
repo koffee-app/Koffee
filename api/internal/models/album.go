@@ -17,7 +17,7 @@ import (
 
 type albumRepository struct {
 	db        *sqlx.DB
-	imageRepo RepositoryImages
+	imageRepo ImagesRepository
 }
 
 // Album Database model
@@ -71,7 +71,7 @@ var albumSchema = `
 `
 
 // InitializeAlbums .
-func InitializeAlbums(db *sqlx.DB, repoImages RepositoryImages) RepositoryAlbums {
+func InitializeAlbums(db *sqlx.DB, repoImages ImagesRepository) AlbumsRepository {
 	tx := db.MustBegin()
 	_, _ = tx.Exec(albumSchema)
 	_ = tx.Commit()
@@ -345,15 +345,20 @@ type AlbumDBJSON struct {
 }
 
 // GetAlbumFull retrieves an album in a JSON manner
-// TODO: Test
 func (r *albumRepository) GetAlbumFull(albumID uint32, published bool) (*AlbumJSON, error) {
 	var albums AlbumDBJSON
 	tx := r.db.MustBegin()
 	err := tx.Get(&albums, db.GetAlbumFullInformation, albumID, published)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("Album does not exist")
+	}
 	if err != nil {
 		return nil, fmt.Errorf("Error retrieving album %v", err)
 	}
 	err = tx.Commit()
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("Album does not exist")
+	}
 	if err != nil {
 		return nil, fmt.Errorf("Error retrieving album %v", err)
 	}
@@ -365,7 +370,7 @@ func (r *albumRepository) GetAlbumFull(albumID uint32, published bool) (*AlbumJS
 	return &album, nil
 }
 
-// TODO: Test
+// TODO: Test, and sort via ids passed.
 func (r *albumRepository) GetAlbumsFull(published bool, ids ...uint32) ([]AlbumJSON, error) {
 	var albums AlbumDBJSON
 	tx := r.db.MustBegin()

@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"koffee/internal/db"
 
@@ -40,6 +41,7 @@ type Song struct {
 	Duration       uint64        `json:"duration"`
 }
 
+// Songs is a songs array json
 type Songs struct {
 	Song []Song `json:"songs"`
 }
@@ -48,9 +50,12 @@ type songRepo struct {
 	db *sqlx.DB
 }
 
+// ErrSongNotFound is an error when the requested song/s are not in the database
+var ErrSongNotFound = errors.New("Song or songs requested are not found in the database")
+
 // InitializeSongRepository Initializes the song repo
-func InitializeSongRepository(db *sqlx.DB) songRepo {
-	return songRepo{db: db}
+func InitializeSongRepository(db *sqlx.DB) SongsRepository {
+	return &songRepo{db: db}
 }
 
 // InsertSong inserts new song ( TEST )
@@ -62,6 +67,11 @@ func (s *songRepo) GetSongsByID(albumID uint32) ([]Song, error) {
 	tx := s.db.MustBegin()
 	var song SongModel
 	err := tx.Get(&song, db.GetSongsByAlbumIDQuery, albumID, false)
+
+	if err == sql.ErrNoRows {
+		return nil, ErrSongNotFound
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("Error with the transaction %v", err)
 	}

@@ -11,7 +11,7 @@ import (
 
 type imageController struct {
 	listener rabbitmq.MessageListener
-	repo     models.RepositoryImages
+	repo     models.ImagesRepository
 }
 
 type bodyImage struct {
@@ -25,7 +25,7 @@ type bodyImage struct {
 
 // InitializeImageController inits the rabbit controller for receiving all of the messages from the image services;
 // this means that every change to the image urls or if there is a new image in the image service it will be notified here
-func InitializeImageController(l rabbitmq.MessageListener, repo models.RepositoryImages) {
+func InitializeImageController(l rabbitmq.MessageListener, repo models.ImagesRepository) {
 	ic := imageController{listener: l, repo: repo}
 	l.OnMessage("new_image_update", ic.handler)
 }

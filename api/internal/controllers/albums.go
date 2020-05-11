@@ -40,13 +40,13 @@ func (a *albumBody) sanitize() {
 }
 
 type albumController struct {
-	repository  models.RepositoryAlbums
+	repository  models.AlbumsRepository
 	mq          rabbitmq.MessageListener
 	albumSender rabbitmq.MessageSender
 }
 
 // InitializeAlbumController inits the controller of albums
-func InitializeAlbumController(routes *Group, router *httprouter.Router, repo models.RepositoryAlbums, q rabbitmq.MessageListener) {
+func InitializeAlbumController(routes *Group, router *httprouter.Router, repo models.AlbumsRepository, q rabbitmq.MessageListener) {
 	albumImpl := albumController{repository: repo, mq: q, albumSender: q.NewSender("new_album")}
 
 	q.OnMessage("update_collaborators", albumImpl.updateCollab)
@@ -60,12 +60,29 @@ func InitializeAlbumController(routes *Group, router *httprouter.Router, repo mo
 	router.GET(group.Route("/public/:profile"), albumImpl.getPublicAlbums)
 	router.GET(group.Route("/id/:album_id"), albumImpl.getPublicAlbum)
 	router.PUT(group.Route("/:id"), middleware.Authorization(albumImpl.updateAlbum))
+	router.GET(group.Route("/full/:id"), albumImpl.getAlbumFull)
 
 	// Post an album
 	router.POST(group.Route(""), middleware.Authorization(albumImpl.createAlbum))
 
 	// Get a public album
 
+}
+
+func (a *albumController) getAlbumFull(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	id := params.ByName("id")
+	IDu64, err := strconv.ParseUint(id, 10, 32)
+	if err != nil {
+		view.AlbumError(w, &models.AlbumError{Internal: "ID is not an integer"})
+		return
+	}
+	album, err := a.repository.GetAlbumFull(uint32(IDu64), true)
+	if err != nil {
+		view.AlbumError(w, &models.AlbumError{Internal: err.Error()})
+		return
+	}
+	view.PrepareJSON(w, 200)
+	view.ReturnJSON(w, view.JSON(album, "Success", 200))
 }
 
 func (a *albumController) createAlbum(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {

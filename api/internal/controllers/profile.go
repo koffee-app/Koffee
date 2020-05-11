@@ -31,13 +31,13 @@ func (p *profileBody) sanitize() {
 }
 
 type profileController struct {
-	profileRepo models.RepositoryProfiles
+	profileRepo models.ProfilesRepository
 	event       rabbitmq.MessageSender
 	update      rabbitmq.MessageSender
 }
 
 // InitializeProfileController initializes profile routes
-func InitializeProfileController(routes *Group, router *httprouter.Router, profile models.RepositoryProfiles, rbEvent rabbitmq.MessageListener) {
+func InitializeProfileController(routes *Group, router *httprouter.Router, profile models.ProfilesRepository, rbEvent rabbitmq.MessageListener) {
 	p := profileController{profileRepo: profile, event: rbEvent.NewSender("new_profile"), update: rbEvent.NewSender("profile_update")}
 	group := New(routes, "/profile")
 	router.POST(group.Route("/"), middleware.Authorization(p.createProfile))

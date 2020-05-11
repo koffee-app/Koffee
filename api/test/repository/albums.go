@@ -10,7 +10,7 @@ import (
 
 // TestCreateAlbum mini-test to check that everything works
 // TODO Delete the db sqlx.DB ref
-func TestCreateAlbum(p models.RepositoryProfiles, ra models.RepositoryAlbums, db *sqlx.DB) bool {
+func TestCreateAlbum(p models.ProfilesRepository, ra models.AlbumsRepository, db *sqlx.DB) bool {
 	defer func() {
 		tx := db.MustBegin()
 		_ = tx.QueryRowx("DELETE FROM profiles WHERE userid=23231323")

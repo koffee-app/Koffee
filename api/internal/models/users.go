@@ -50,7 +50,7 @@ type repoUsers struct {
 }
 
 // InitializeUsers initializes table
-func InitializeUsers(db *sqlx.DB, tokenService auth.Token) RepositoryUsers {
+func InitializeUsers(db *sqlx.DB, tokenService auth.Token) UsersRepository {
 	t := db.MustBegin()
 	_, _ = t.Exec(userSchema)
 	_ = t.Commit()

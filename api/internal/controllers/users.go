@@ -27,11 +27,11 @@ func (u *userBody) BodyUser(r io.ReadCloser) error {
 
 // user controller implementation
 type userImpl struct {
-	repository models.RepositoryUsers
+	repository models.UsersRepository
 }
 
 // InitializeUserController inits the routes for the routes.
-func InitializeUserController(api *Group, router *httprouter.Router, repo models.RepositoryUsers) {
+func InitializeUserController(api *Group, router *httprouter.Router, repo models.UsersRepository) {
 	u := userImpl{repository: repo}
 	userGroup := New(api, "/user")
 	// models.Initialize(u.db)

@@ -87,7 +87,7 @@ type imageRepository struct {
 }
 
 // InitializeImages .
-func InitializeImages(db *sqlx.DB) RepositoryImages {
+func InitializeImages(db *sqlx.DB) ImagesRepository {
 	t := db.MustBegin()
 	t.Exec(schemaImg)
 	t.Commit()

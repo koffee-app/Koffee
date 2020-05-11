@@ -4,8 +4,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// RepositoryUsers interface
-type RepositoryUsers interface {
+// UsersRepository interface
+type UsersRepository interface {
 	AddUser(email, password string, isGoogleAccount bool) (*User, *UserError)
 	LogUserNotGoogle(email, password string) (*User, *UserError)
 	LogUserGoogle(token string) (*User, *UserError)
@@ -15,8 +15,8 @@ type RepositoryUsers interface {
 	Refresh(refreshToken string) (*User, *UserError)
 }
 
-// RepositoryProfiles interface
-type RepositoryProfiles interface {
+// ProfilesRepository interface
+type ProfilesRepository interface {
 	CreateProfile(username, name string, id uint32, artist bool) (*Profile, *ProfileError)
 	SingleProfile(p *Profile, useArtist bool) *Profile
 	GetProfileByUsername(username string) *Profile
@@ -28,8 +28,8 @@ type RepositoryProfiles interface {
 	GetProfilesByIDs(profileIDs []uint32) []Profile
 }
 
-// RepositoryAlbums interface
-type RepositoryAlbums interface {
+// AlbumsRepository interface
+type AlbumsRepository interface {
 	CreateAlbum(userID uint32, name string, artistsIdentifiers []string, description string) (*Album, *AlbumError)
 	// Returns an album which is published in the platform
 	GetPublicAlbumByID(id uint32) (*Album, *AlbumError)
@@ -45,14 +45,21 @@ type RepositoryAlbums interface {
 	GetAlbumsByUserIDPublish(userID uint32, published bool, afterID int, beforeID int, nItems int) ([]Album, *AlbumError)
 	GetAlbumsImages(albums []Album) []Album
 	NewCollaborators(handlers []string, id uint32) *Album
+	GetAlbumsFull(published bool, ids ...uint32) ([]AlbumJSON, error)
+	GetAlbumFull(albumID uint32, published bool) (*AlbumJSON, error)
 }
 
-// RepositoryImages saves the image urls, its object type, and the related identifier.
-type RepositoryImages interface {
+// ImagesRepository saves the image urls, its object type, and the related identifier.
+type ImagesRepository interface {
 	// CreateOrUpdateImage tries to find an image in the table, if it exists it updates it
 	CreateOrUpdateImage(id uint32, urlXL, urlMed, urlSm string, typeImage ImageTypes) (*Image, *ImageError)
 	GetImage(id uint32, typeImage ImageTypes) *Image
 	DeleteImage(id uint32, typeImage ImageTypes) *ImageError
 	GetImagesSameID(id uint32, typeImages ...ImageTypes) ([]Image, *ImageError)
 	GetImagesFromIDs(typeImages []ImageTypes, ids ...uint32) ([]Image, error)
+}
+
+// SongsRepository are the available actions in the songs repository
+type SongsRepository interface {
+	GetSongsByID(albumID uint32) ([]Song, error)
 }

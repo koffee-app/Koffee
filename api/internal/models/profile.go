@@ -31,9 +31,10 @@ type profileFind struct {
 
 // ProfileJSON is a profile
 type ProfileJSON struct {
-	Name     string `json:"name"`
-	Username string `json:"username"`
-	UserID   uint32 `json:"userid"`
+	Name     string  `json:"name"`
+	Username string  `json:"username"`
+	UserID   uint32  `json:"userid"`
+	Images   []Image `json:"images,omitempty"`
 }
 
 // Profile model
@@ -93,11 +94,11 @@ func (p *Profile) getSingleProfile(r *repoProfiles, useArtist bool) *Profile {
 
 type repoProfiles struct {
 	db        *sqlx.DB
-	imageRepo RepositoryImages
+	imageRepo ImagesRepository
 }
 
 // InitializeProfile initializes tables if necessary of profiles
-func InitializeProfile(db *sqlx.DB, imageRepo RepositoryImages) RepositoryProfiles {
+func InitializeProfile(db *sqlx.DB, imageRepo ImagesRepository) ProfilesRepository {
 	tx := db.MustBegin()
 	tx.Exec(schemaProfile)
 	tx.Commit()
