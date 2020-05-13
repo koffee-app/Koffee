@@ -23,3 +23,23 @@ FROM albums,
 WHERE albums.id=$1
   AND albums.published=$2
 `
+
+// GetSongByIDQuery is a query which retrieves a song via its ID, $1 - song_id
+const GetSongByIDQuery = `
+  SELECT row_to_json(songs)
+  FROM
+    (SELECT songs.name,
+            songs.duration,
+            songs.id,
+            songs.albumid,
+
+      (SELECT array_to_json(array_agg(row_to_json(profiles)))
+        FROM
+          (SELECT profiles.name,
+                  profiles.username,
+                  profiles.userid
+          FROM profiles
+          WHERE profiles.username=ANY(songs.artists) ) profiles) AS artists
+    FROM songs
+    WHERE songs.id=$1) songs
+`

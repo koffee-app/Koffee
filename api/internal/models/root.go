@@ -10,8 +10,8 @@ import (
 /// We won't do indexed search and cache here! That will be inside another folder
 
 // Initialize every table
-func Initialize(db *sqlx.DB, tokenService auth.Token) (UsersRepository, ProfilesRepository, AlbumsRepository, ImagesRepository) {
+func Initialize(db *sqlx.DB, tokenService auth.Token) (UsersRepository, ProfilesRepository, AlbumsRepository, ImagesRepository, SongsRepository) {
 	// todo Reutrn all repos
 	images := InitializeImages(db)
-	return InitializeUsers(db, tokenService), InitializeProfile(db, images), InitializeAlbums(db, images), images
+	return InitializeUsers(db, tokenService), InitializeProfile(db, images), InitializeAlbums(db, images), images, InitializeSongRepository(db)
 }

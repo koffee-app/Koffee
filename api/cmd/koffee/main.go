@@ -22,7 +22,7 @@ func startServer(db *sqlx.DB) {
 
 	middleware.Initialize(tokenService)
 	// initialize repos
-	users, profiles, albums, _ := models.Initialize(db, tokenService)
+	users, profiles, albums, _, songs := models.Initialize(db, tokenService)
 	// TODO Put this in a single function that tests everything we want
 	repository.TestCreateAlbum(profiles, albums, db)
 	// initialize controllers
@@ -35,6 +35,7 @@ func startServer(db *sqlx.DB) {
 	controllers.InitializeUserController(&group, router, users)
 	controllers.InitializeProfileController(&group, router, profiles, rabbit)
 	controllers.InitializeAlbumController(&group, router, albums, rabbit)
+	controllers.InitializeSongsController(&group, router, songs)
 	// Inform that we finished intiializing
 	fmt.Println("Connected on port 8080")
 	if http.ListenAndServe(":8080", middleware.ApplyCors(router, &middleware.Cors{Origin: "*"})) != nil {

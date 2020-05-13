@@ -62,4 +62,5 @@ type ImagesRepository interface {
 // SongsRepository are the available actions in the songs repository
 type SongsRepository interface {
 	GetSongsByID(albumID uint32) ([]Song, error)
+	GetSongByID(songID uint32) (*Song, error)
 }

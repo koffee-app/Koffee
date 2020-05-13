@@ -30,6 +30,7 @@ type SongModel struct {
 	duration       uint64         `db:"duration"`
 	paths          types.JSONText `db:"paths"`
 	Songs          types.JSONText `db:"songs"`
+	Song           types.JSONText `db:"song"`
 }
 
 // Song model
@@ -85,4 +86,27 @@ func (s *songRepo) GetSongsByID(albumID uint32) ([]Song, error) {
 		return nil, fmt.Errorf("Error with the transaction %v", err)
 	}
 	return songs.Song, nil
+}
+
+func (s *songRepo) GetSongByID(songID uint32) (*Song, error) {
+	tx := s.db.MustBegin()
+	var song SongModel
+	err := tx.Get(&song, db.GetSongsByAlbumIDQuery, songID)
+
+	if err == sql.ErrNoRows {
+		return nil, ErrSongNotFound
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("Error with the transaction %v", err)
+	}
+	err = tx.Commit()
+	if err != nil {
+		return nil, fmt.Errorf("Error with the transaction %v", err)
+	}
+	var songJSON Song
+	if err := song.Song.Unmarshal(&songJSON); err != nil {
+		return nil, fmt.Errorf("Error with the transaction %v", err)
+	}
+	return &songJSON, nil
 }
